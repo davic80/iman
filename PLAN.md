@@ -466,8 +466,9 @@ directorio, y las plantillas van en la raíz por comodidad al editarlas.
 Calcado de gorilla, que es lo que ya funciona.
 
 **Dockerfile** multi-etapa: `golang:1.23-alpine` compila un binario estático, y
-la imagen final es `gcr.io/distroless/static` con el binario, las plantillas y
-los estáticos. Del orden de 15–20 MB, arranque instantáneo, sin shell dentro.
+la imagen final es `gcr.io/distroless/static` con el binario dentro (plantillas
+y estáticos van empotrados con `//go:embed`). Medido en la fase 0: **3,9 MB
+comprimida**, arranque instantáneo, sin shell dentro.
 
 **CI** (`.github/workflows/ci.yml`), misma forma que gorilla:
 

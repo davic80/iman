@@ -1,7 +1,7 @@
 # Imán es un binario estático con las plantillas y los estáticos empotrados
 # dentro (//go:embed). Eso permite que la imagen final sea un distroless con un
 # único fichero: sin shell, sin gestor de paquetes, sin nada que parchear.
-# Del orden de 15-20 MB y arranque instantáneo.
+# Medido: 3,9 MB comprimida, y arranque instantáneo.
 
 # --- Build ------------------------------------------------------------------
 FROM golang:1.23-alpine AS build
