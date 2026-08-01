@@ -1,0 +1,10 @@
+# Fuera del contexto de build todo lo que no compila.
+.git
+.github
+.env
+.DS_Store
+/iman
+/dist
+*.md
+docker-compose.yml
+Dockerfile

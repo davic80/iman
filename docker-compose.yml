@@ -1,0 +1,48 @@
+# imán — SOLO la app, detrás del Caddy que ya sirve el resto de proyectos.
+# Aquí no hay un segundo Caddy: el compartido hace reverse_proxy a este
+# contenedor por su nombre a través de una red Docker común.
+#
+# Puesta en marcha:
+#   1) Averigua la red de tu Caddy:
+#        docker inspect cloud-caddy-1 \
+#          --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+#   2) Ponla en .env como PROXY_NETWORK
+#   3) docker compose up -d
+#   4) Añade al Caddyfile compartido:
+#        iman.ojoalprecio.com {
+#            basic_auth { david <hash-bcrypt> }
+#            reverse_proxy iman:8080
+#        }
+#      Y recarga:  docker exec cloud-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+
+services:
+  iman:
+    image: ghcr.io/davic80/iman:${IMAN_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "8080" # solo interno; alcanzable por Caddy en la red compartida
+    environment:
+      # Qué dominio funciona para cada sitio. Ver el volumen de abajo.
+      IMAN_ESTADO: /datos/estado.json
+    volumes:
+      # Único estado persistente de la app. Perderlo no rompe nada: obliga a
+      # redescubrir los dominios en el siguiente arranque.
+      - estado:/datos
+    networks:
+      proxy:
+        aliases:
+          - iman
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?define PROXY_NETWORK en .env con la red de tu Caddy}
+
+volumes:
+  estado:
+    driver: local

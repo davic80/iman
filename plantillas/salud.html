@@ -1,0 +1,39 @@
+{{define "titulo"}}Imán — salud{{end}}
+
+{{define "contenido"}}
+<section class="salud">
+  <h1>Salud</h1>
+
+  <dl class="datos">
+    <dt>Versión</dt><dd><code>{{.Version}}</code></dd>
+    <dt>En pie desde</dt><dd>{{.Arranque}}</dd>
+    <dt>Tiempo en pie</dt><dd>{{.EnPie}}</dd>
+  </dl>
+
+  <h2>Conectores</h2>
+  {{if .Conectores}}
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Sitio</th><th>Estado</th><th>Dominio en uso</th>
+        <th>Última comprobación</th><th>Latencia</th><th>Errores</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Conectores}}
+      <tr>
+        <td>{{.Nombre}}</td>
+        <td><span class="pastilla pastilla-{{.Clase}}">{{.Estado}}</span></td>
+        <td><code>{{.Dominio}}</code></td>
+        <td>{{.Comprobado}}</td>
+        <td>{{.Latencia}}</td>
+        <td>{{.Errores}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{else}}
+  <p class="vacio">Ninguno todavía. Llegan en la fase 1.</p>
+  {{end}}
+</section>
+{{end}}

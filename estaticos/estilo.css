@@ -1,0 +1,194 @@
+/* Imán — hoja única, sin build, sin dependencias.
+   Oscuro por defecto: esto se usa de noche. */
+
+:root {
+  --fondo: #0e1117;
+  --fondo-alto: #161b25;
+  --borde: #262d3a;
+  --texto: #e6e9ef;
+  --tenue: #8b94a7;
+  --iman: #e8543f;
+  --bien: #3fb96f;
+  --regular: #d9a441;
+  --mal: #e05252;
+  --radio: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+a { color: inherit; }
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+/* — Cabecera — */
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--borde);
+  background: var(--fondo-alto);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-decoration: none;
+}
+
+.marca-nombre { letter-spacing: -0.02em; }
+.marca-icono { font-size: 1.3rem; }
+
+.cabecera nav a {
+  color: var(--tenue);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.cabecera nav a:hover { color: var(--texto); }
+
+/* — Buscador — */
+
+.buscador { text-align: center; padding: 2.5rem 0 1rem; }
+
+.buscador h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  letter-spacing: -0.03em;
+}
+
+.lema { margin: 0 0 2rem; color: var(--tenue); }
+
+.caja {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.caja input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  color: var(--texto);
+  background: var(--fondo-alto);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.caja input:focus {
+  outline: 2px solid var(--iman);
+  outline-offset: 1px;
+}
+
+.caja button {
+  padding: 0.85rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--iman);
+  border: 0;
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+.caja button:hover { filter: brightness(1.08); }
+
+/* — Aviso — */
+
+.aviso {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--fondo-alto);
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--iman);
+  border-radius: var(--radio);
+}
+
+.aviso h2 { margin: 0 0 0.6rem; font-size: 1.05rem; }
+.aviso p { margin: 0 0 0.7rem; color: var(--tenue); font-size: 0.95rem; }
+.aviso p:last-child { margin-bottom: 0; }
+
+code {
+  padding: 0.1rem 0.35rem;
+  background: #0a0d13;
+  border: 1px solid var(--borde);
+  border-radius: 5px;
+  font-size: 0.88em;
+}
+
+/* — Salud — */
+
+.salud h1 { margin: 0 0 1.5rem; letter-spacing: -0.02em; }
+.salud h2 { margin: 2rem 0 0.75rem; font-size: 1.05rem; }
+
+.datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+}
+
+.datos dt { color: var(--tenue); font-size: 0.9rem; }
+.datos dd { margin: 0; }
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla th,
+.tabla td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla th { color: var(--tenue); font-weight: 600; }
+
+.pastilla {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0e1117;
+}
+
+.pastilla-bien { background: var(--bien); }
+.pastilla-regular { background: var(--regular); }
+.pastilla-mal { background: var(--mal); }
+
+.vacio { color: var(--tenue); font-style: italic; }
+
+/* — Pie — */
+
+.pie {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--tenue);
+  font-size: 0.82rem;
+  border-top: 1px solid var(--borde);
+}

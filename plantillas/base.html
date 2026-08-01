@@ -1,0 +1,31 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- La instancia es privada. Que no acabe en un buscador. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>{{block "titulo" .}}Imán{{end}}</title>
+<link rel="stylesheet" href="/estaticos/estilo.css">
+<link rel="icon" href="/estaticos/iman.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="cabecera">
+  <a class="marca" href="/">
+    <span class="marca-icono">🧲</span>
+    <span class="marca-nombre">Imán</span>
+  </a>
+  <nav>
+    <a href="/salud">Salud</a>
+  </nav>
+</header>
+
+<main>
+{{block "contenido" .}}{{end}}
+</main>
+
+<footer class="pie">
+  <span>Imán · {{.Version}}</span>
+</footer>
+</body>
+</html>{{end}}

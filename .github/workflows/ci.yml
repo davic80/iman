@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      # gofmt no falla solo: hay que comprobar que no tiene nada que decir.
+      - name: Formato
+        run: |
+          sin_formato=$(gofmt -l .)
+          if [ -n "$sin_formato" ]; then
+            echo "Ficheros sin formatear:"
+            echo "$sin_formato"
+            exit 1
+          fi
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./...
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    # La imagen solo se publica desde main: una rama rota no puede llegar a
+    # produccion.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      # Obligatorio para usar el cache de GitHub Actions: el driver `docker` que
+      # trae el runner por defecto no soporta exportar cache.
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # El SHA viaja dentro del binario y se ve en /salud.
+          build-args: |
+            VERSION=${{ github.sha }}
+          # El tag con el SHA permite volver atras sin reconstruir nada.
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

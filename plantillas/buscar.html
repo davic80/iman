@@ -1,0 +1,27 @@
+{{define "titulo"}}Imán — buscar en castellano{{end}}
+
+{{define "contenido"}}
+<section class="buscador">
+  <h1>Torrents en castellano</h1>
+  <p class="lema">Busca una vez. Sin latino, sin VOSE.</p>
+
+  <form class="caja" action="/buscar" method="get" role="search">
+    <input type="search" name="q" value="{{.Consulta}}" placeholder="Título de película o serie"
+           autocomplete="off" autofocus aria-label="Qué buscar">
+    <button type="submit">Buscar</button>
+  </form>
+</section>
+
+{{if .SinConectores}}
+<section class="aviso">
+  <h2>Todavía no hay conectores</h2>
+  <p>
+    Esto es la fase 0: el tubo de despliegue completo, sin nada que buscar aún.
+    Si estás leyendo esto en <code>iman.ojoalprecio.com</code>, significa que la
+    imagen se construyó en GitHub, llegó al servidor y Caddy la está sirviendo
+    con TLS. Que es exactamente lo que había que demostrar.
+  </p>
+  <p>El siguiente paso es el primer conector: EliteTorrent.</p>
+</section>
+{{end}}
+{{end}}
