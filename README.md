@@ -5,8 +5,9 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 0.** El tubo de despliegue completo funciona; todavía no hay
-> conectores. Ver [PLAN.md](PLAN.md).
+> **Estado: fase 1.** El tubo de despliegue funciona y el primer conector
+> (EliteTorrent) ya busca, filtra idioma y saca magnets. Falta engancharlo a la
+> interfaz. Ver [PLAN.md](PLAN.md).
 
 ## Por qué
 
@@ -45,6 +46,16 @@ JavaScript.
 go test ./...
 go run ./cmd/iman        # http://localhost:8080
 ```
+
+Los tests no tocan la red: los conectores se prueban contra capturas HTML en
+`internal/conectores/testdata`. Para comprobar de verdad si un sitio sigue
+sirviendo el mismo HTML, hay tests aparte que sí salen a internet:
+
+```bash
+go test -tags vivo -v ./internal/conectores/
+```
+
+Cuando esos fallen, es que el sitio ha cambiado y toca recapturar las fixtures.
 
 | Variable | Por defecto | Qué es |
 |---|---|---|

@@ -4,7 +4,7 @@
 # Medido: 3,9 MB comprimida, y arranque instantáneo.
 
 # --- Build ------------------------------------------------------------------
-FROM golang:1.23-alpine AS build
+FROM golang:1.25-alpine AS build
 WORKDIR /src
 
 # Las dependencias van en su propia capa. Hoy Imán no tiene ninguna, pero en
