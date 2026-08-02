@@ -103,9 +103,11 @@ func DetectarIdioma(s string) Idioma {
 	return Desconocido
 }
 
-// normalizar deja el texto en minúsculas, sin acentos y con los separadores
+// Normalizar deja el texto en minúsculas, sin acentos y con los separadores
 // convertidos en espacios, para que "Español", "ESPANOL" y "[espanol]" sean lo
-// mismo a la hora de buscar marcas.
+// mismo a la hora de compararlos.
+func Normalizar(s string) string { return normalizar(s) }
+
 func normalizar(s string) string {
 	s = strings.ToLower(s)
 	s = sinAcentos.Replace(s)

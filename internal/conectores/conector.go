@@ -8,6 +8,9 @@ package conectores
 
 import (
 	"context"
+	"io"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/davic80/iman/internal/titulos"
@@ -43,6 +46,24 @@ type Resultado struct {
 // ordenar por semillas pondría los sitios que no las dan al final por un dato
 // que no existe.
 func (r Resultado) SemillasConocidas() bool { return r.Semillas >= 0 }
+
+// reInfoHash saca el hash de un magnet. Puede venir en hexadecimal (40
+// caracteres) o en base32 (32), que es más raro pero legal.
+var reInfoHash = regexp.MustCompile(`(?i)xt=urn:btih:([a-z0-9]{32,40})`)
+
+// InfoHash identifica al torrent independientemente de quién lo publique. Es
+// lo único que permite saber con certeza que dos sitios ofrecen exactamente lo
+// mismo; el título no vale, porque cada uno lo escribe a su manera.
+//
+// Vacío si el resultado todavía no tiene magnet, que es lo normal hasta que se
+// resuelve la ficha.
+func (r Resultado) InfoHash() string {
+	m := reInfoHash.FindStringSubmatch(r.Magnet)
+	if m == nil {
+		return ""
+	}
+	return strings.ToLower(m[1])
+}
 
 // Enlace devuelve la mejor forma de llegar al torrent: el magnet si lo hay,
 // si no el .torrent, y como último recurso la ficha del sitio.
@@ -81,4 +102,24 @@ type Conector interface {
 type Resolutor interface {
 	// Resolver rellena Magnet y Torrent pidiendo la ficha del resultado.
 	Resolver(ctx context.Context, r *Resultado) error
+}
+
+// Anfitrion lo implementan los conectores que saben en qué dominio están
+// buscando hoy.
+//
+// Sirve para enseñarlo en /salud: cuando un sitio deja de devolver resultados,
+// lo primero que hay que saber es si es que se ha mudado de dominio.
+type Anfitrion interface {
+	Dominio() string
+}
+
+// Descargador lo implementan los conectores capaces de traer el fichero
+// .torrent ellos mismos.
+//
+// Lo trae el servidor en vez de mandar al navegador al sitio, para que quien
+// busca no tenga que conectarse a él. La implementación tiene que comprobar
+// que la URL es suya: llega de la petición del usuario, y un conector que se
+// fíe convierte a Imán en un proxy abierto.
+type Descargador interface {
+	Descargar(ctx context.Context, torrent string) (io.ReadCloser, error)
 }

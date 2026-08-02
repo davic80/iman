@@ -5,9 +5,9 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 1.** El tubo de despliegue funciona y el primer conector
-> (EliteTorrent) ya busca, filtra idioma y saca magnets. Falta engancharlo a la
-> interfaz. Ver [PLAN.md](PLAN.md).
+> **Estado: fase 1.** Funciona de punta a punta con un solo sitio
+> (EliteTorrent): buscas, filtra el idioma, ordena y te da el magnet o el
+> `.torrent`. Faltan los demás conectores. Ver [PLAN.md](PLAN.md).
 
 ## Por qué
 

@@ -3,6 +3,7 @@ package conectores
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -39,6 +40,16 @@ func NuevoEliteTorrent(c *Cliente) *EliteTorrent {
 }
 
 func (e *EliteTorrent) Nombre() string { return "EliteTorrent" }
+
+// Dominio es dónde se está buscando hoy. Lo enseña /salud, porque cuando este
+// sitio deja de devolver nada suele ser que se ha mudado.
+func (e *EliteTorrent) Dominio() string {
+	u, err := url.Parse(e.base())
+	if err != nil {
+		return ""
+	}
+	return u.Host
+}
 
 func (e *EliteTorrent) base() string {
 	if e.Base == "" {
@@ -130,6 +141,9 @@ func (e *EliteTorrent) Resolver(ctx context.Context, r *Resultado) error {
 	if r.Ficha == "" {
 		return fmt.Errorf("elitetorrent: resultado sin ficha")
 	}
+	if err := e.esMia(r.Ficha); err != nil {
+		return err
+	}
 	doc, err := e.Cliente.Documento(ctx, r.Ficha)
 	if err != nil {
 		return fmt.Errorf("elitetorrent: %w", err)
@@ -194,6 +208,48 @@ func fichaTecnica(doc *goquery.Document) map[string]string {
 		}
 	})
 	return datos
+}
+
+// Descargar trae el fichero .torrent.
+//
+// Lo pide el servidor y no el navegador del usuario, para que quien busca no
+// tenga que conectarse al sitio ni aparecer en sus registros.
+func (e *EliteTorrent) Descargar(ctx context.Context, torrent string) (io.ReadCloser, error) {
+	if err := e.esMia(torrent); err != nil {
+		return nil, err
+	}
+	return e.Cliente.Traer(ctx, torrent)
+}
+
+// esMia comprueba que una URL es de este sitio.
+//
+// Las URLs que llegan a Resolver y a Descargar vienen de la petición del
+// usuario, así que sin esta comprobación cualquiera podría usar Imán para
+// pedir en su nombre lo que quisiera, incluida la red interna del servidor.
+func (e *EliteTorrent) esMia(dir string) error {
+	base, err := url.Parse(e.base())
+	if err != nil {
+		return fmt.Errorf("elitetorrent: base inválida: %w", err)
+	}
+	u, err := url.Parse(dir)
+	if err != nil {
+		return fmt.Errorf("elitetorrent: url inválida %q: %w", dir, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("elitetorrent: %q no es una url http", dir)
+	}
+	if !mismoSitio(u.Hostname(), base.Hostname()) {
+		return fmt.Errorf("elitetorrent: %q no es de este sitio", u.Hostname())
+	}
+	return nil
+}
+
+// mismoSitio acepta el dominio y sus subdominios: el sitio mezcla
+// "elitetorrent.wf" y "www.elitetorrent.wf" en sus propios enlaces.
+func mismoSitio(anfitrion, base string) bool {
+	anfitrion, base = strings.ToLower(anfitrion), strings.ToLower(base)
+	base = strings.TrimPrefix(base, "www.")
+	return anfitrion == base || strings.HasSuffix(anfitrion, "."+base)
 }
 
 // absoluta convierte un enlace relativo en absoluto. Estos sitios mezclan las

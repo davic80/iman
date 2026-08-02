@@ -18,6 +18,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/davic80/iman/internal/buscador"
+	"github.com/davic80/iman/internal/conectores"
 	"github.com/davic80/iman/internal/web"
 )
 
@@ -47,10 +49,23 @@ func main() {
 	}
 }
 
+// motor arma el buscador con los sitios que hay conectados.
+//
+// El cliente HTTP es uno solo y compartido: el freno que espacia las peticiones
+// va por dominio, así que sitios distintos no se estorban, pero dos conectores
+// del mismo sitio sí se ponen en fila.
+func motor(log *slog.Logger, cfg web.Config) *buscador.Buscador {
+	cliente := conectores.NuevoCliente(2 * time.Second)
+
+	return buscador.Nuevo(log, cfg.TiempoBusqueda,
+		conectores.NuevoEliteTorrent(cliente),
+	)
+}
+
 func ejecutar(log *slog.Logger) error {
 	cfg := web.CargarConfig(version)
 
-	servidor, err := web.Nuevo(cfg, log, nil)
+	servidor, err := web.Nuevo(cfg, log, motor(log, cfg))
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-{{define "titulo"}}Imán — buscar en castellano{{end}}
+{{define "titulo"}}{{if .Consulta}}{{.Consulta}} — Imán{{else}}Imán — buscar en castellano{{end}}{{end}}
 
 {{define "contenido"}}
 <section class="buscador">
@@ -9,19 +9,74 @@
     <input type="search" name="q" value="{{.Consulta}}" placeholder="Título de película o serie"
            autocomplete="off" autofocus aria-label="Qué buscar">
     <button type="submit">Buscar</button>
+    <label class="dudosos">
+      <input type="checkbox" name="dudosos" value="1" onchange="this.form.submit()"
+             {{if .Dudosos}}checked{{end}}>
+      Incluir dudosos
+    </label>
   </form>
 </section>
 
 {{if .SinConectores}}
 <section class="aviso">
-  <h2>Todavía no hay conectores</h2>
-  <p>
-    Esto es la fase 0: el tubo de despliegue completo, sin nada que buscar aún.
-    Si estás leyendo esto en <code>iman.ojoalprecio.com</code>, significa que la
-    imagen se construyó en GitHub, llegó al servidor y Caddy la está sirviendo
-    con TLS. Que es exactamente lo que había que demostrar.
+  <h2>No hay ningún sitio conectado</h2>
+  <p>El servidor está en pie pero no tiene a quién preguntar. Mira <a href="/salud">/salud</a>.</p>
+</section>
+{{end}}
+
+{{if .Buscado}}
+<section class="resultados">
+  {{if .Resultados}}
+  <p class="resumen">
+    {{len .Resultados}} resultado{{if ne (len .Resultados) 1}}s{{end}} en {{.Duracion}}{{if .Descartados}},
+    <span class="descartados">{{.Descartados}} descartado{{if ne .Descartados 1}}s{{end}} por idioma</span>{{end}}
   </p>
-  <p>El siguiente paso es el primer conector: EliteTorrent.</p>
+
+  <ul class="lista">
+    {{range .Resultados}}
+    <li class="resultado{{if .Dudoso}} resultado--dudoso{{end}}">
+      <div class="resultado-datos">
+        <h3 class="resultado-titulo">{{.Titulo}}</h3>
+        <p class="etiquetas">
+          <span class="etiqueta etiqueta--idioma{{if .Dudoso}} etiqueta--duda{{end}}">{{.Idioma}}</span>
+          {{with .Calidad}}<span class="etiqueta">{{.}}</span>{{end}}
+          {{with .Episodio}}<span class="etiqueta">{{.}}</span>{{end}}
+          {{with .Año}}<span class="etiqueta">{{.}}</span>{{end}}
+          {{with .Tamaño}}<span class="etiqueta">{{.}}</span>{{end}}
+          <span class="etiqueta etiqueta--sitio">{{.Sitio}}</span>
+        </p>
+      </div>
+      <div class="resultado-acciones">
+        <button type="button" class="boton boton--copiar" data-magnet="{{.URLMagnet}}">Copiar magnet</button>
+        <a class="boton" href="{{.URLMagnet}}">Abrir</a>
+        <a class="boton boton--flojo" href="{{.URLTorrent}}">.torrent</a>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <section class="aviso">
+    <h2>Nada en castellano</h2>
+    {{if .Descartados}}
+    <p>
+      Los sitios devolvieron {{.Descartados}} resultado{{if ne .Descartados 1}}s{{end}},
+      pero ninguno en castellano de España.
+      {{if not .Dudosos}}Puedes marcar «incluir dudosos» para ver también los duales
+      y los que no traen marca de idioma.{{end}}
+    </p>
+    {{else}}
+    <p>Los sitios no devolvieron nada para «{{.Consulta}}».</p>
+    {{end}}
+  </section>
+  {{end}}
+
+  {{if .Fallos}}
+  <p class="fallos">
+    No contestaron:
+    {{range $i, $f := .Fallos}}{{if $i}}, {{end}}<strong>{{$f.Sitio}}</strong>{{end}}.
+    Los resultados están incompletos.
+  </p>
+  {{end}}
 </section>
 {{end}}
 {{end}}

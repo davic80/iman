@@ -192,3 +192,124 @@ code {
   font-size: 0.82rem;
   border-top: 1px solid var(--borde);
 }
+
+/* — Resultados — */
+
+.dudosos {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--tenue);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.resultados { margin-top: 2rem; }
+
+.resumen {
+  color: var(--tenue);
+  font-size: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.descartados { color: var(--regular); }
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.resultado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: var(--fondo-alto);
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--bien);
+  border-radius: 8px;
+}
+
+/* Lo dudoso se ve dudoso: ni verde ni escondido. */
+.resultado--dudoso { border-left-color: var(--regular); }
+
+.resultado-datos { flex: 1 1 20rem; min-width: 0; }
+
+.resultado-titulo {
+  margin: 0 0 0.4rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.etiqueta {
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  color: var(--tenue);
+  font-size: 0.75rem;
+}
+
+.etiqueta--idioma {
+  color: var(--bien);
+  border-color: var(--bien);
+}
+
+.etiqueta--duda {
+  color: var(--regular);
+  border-color: var(--regular);
+}
+
+.etiqueta--sitio { color: var(--iman); border-color: var(--iman); }
+
+.resultado-acciones {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.boton {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--iman);
+  border-radius: 6px;
+  background: var(--iman);
+  color: #0e1117;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton:hover { filter: brightness(1.1); }
+.boton:disabled { opacity: 0.6; cursor: default; }
+
+.boton--flojo {
+  background: transparent;
+  color: var(--tenue);
+  border-color: var(--borde);
+}
+
+.fallos {
+  margin-top: 1.25rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--regular);
+  background: var(--fondo-alto);
+  color: var(--tenue);
+  font-size: 0.85rem;
+}
