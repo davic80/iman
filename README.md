@@ -5,9 +5,11 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 1.** Funciona de punta a punta con un solo sitio
+> **Estado: fase 2.** Funciona de punta a punta con un solo sitio
 > (EliteTorrent): buscas, filtra el idioma, ordena y te da el magnet o el
-> `.torrent`. Faltan los demás conectores. Ver [PLAN.md](PLAN.md).
+> `.torrent`. El resolutor de dominios ya está montado, así que cuando el sitio
+> se mude Imán lo encontrará solo. Faltan los demás conectores.
+> Ver [PLAN.md](PLAN.md).
 
 ## Por qué
 
@@ -56,6 +58,14 @@ go test -tags vivo -v ./internal/conectores/
 ```
 
 Cuando esos fallen, es que el sitio ha cambiado y toca recapturar las fixtures.
+
+Para ver al resolutor de dominios trabajar, se le miente sobre el dominio y se
+mira el log: tiene que descartarlo y encontrar el bueno él solo.
+
+```bash
+echo '{"EliteTorrent":{"dominio":"https://www.elitetorrent.pl"}}' > /tmp/estado.json
+IMAN_ESTADO=/tmp/estado.json go run ./cmd/iman
+```
 
 | Variable | Por defecto | Qué es |
 |---|---|---|

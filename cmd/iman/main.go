@@ -1,8 +1,8 @@
 // Comando iman: el servidor web.
 //
-// Fase 0 — todavia no hay conectores ni busqueda. Lo que hay es el tubo
-// completo: binario, imagen, CI, compose y Caddy. Se despliega en vacio a
-// proposito, para no tener que depurar el despliegue y el scraping a la vez.
+// Aquí se monta todo: los conectores, el buscador que los lanza en paralelo y
+// el vigilante que mantiene a cada sitio apuntando al dominio en el que vive
+// hoy. Nada de esto se descubre solo, va todo escrito a mano en `motor`.
 package main
 
 import (
@@ -20,6 +20,7 @@ import (
 
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/conectores"
+	"github.com/davic80/iman/internal/dominios"
 	"github.com/davic80/iman/internal/web"
 )
 
@@ -49,26 +50,38 @@ func main() {
 	}
 }
 
-// motor arma el buscador con los sitios que hay conectados.
+// motor arma el buscador y el resolutor de dominios con los sitios conectados.
 //
 // El cliente HTTP es uno solo y compartido: el freno que espacia las peticiones
 // va por dominio, así que sitios distintos no se estorban, pero dos conectores
-// del mismo sitio sí se ponen en fila.
-func motor(log *slog.Logger, cfg web.Config) *buscador.Buscador {
+// del mismo sitio sí se ponen en fila. Eso incluye al resolutor, que así no
+// puede atropellar a un sitio mientras alguien busca en él.
+func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Resolutor) {
 	cliente := conectores.NuevoCliente(2 * time.Second)
+	elite := conectores.NuevoEliteTorrent(cliente)
 
-	return buscador.Nuevo(log, cfg.TiempoBusqueda,
-		conectores.NuevoEliteTorrent(cliente),
-	)
+	// Que no se pueda guardar el estado no impide arrancar: solo significa que
+	// el siguiente arranque volverá a descubrir los dominios.
+	estado, err := dominios.CargarEstado(cfg.EstadoPath)
+	if err != nil {
+		log.Warn("no se pudo leer el estado guardado", "ruta", cfg.EstadoPath, "error", err)
+	}
+
+	vigilante := dominios.Nuevo(cliente, log, estado, elite)
+	vigilante.Restaurar()
+
+	return buscador.Nuevo(log, cfg.TiempoBusqueda, elite), vigilante
 }
 
 func ejecutar(log *slog.Logger) error {
 	cfg := web.CargarConfig(version)
 
-	servidor, err := web.Nuevo(cfg, log, motor(log, cfg))
+	busca, vigilante := motor(log, cfg)
+	servidor, err := web.Nuevo(cfg, log, busca)
 	if err != nil {
 		return err
 	}
+	servidor.ConVigilante(vigilante)
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,
@@ -84,6 +97,11 @@ func ejecutar(log *slog.Logger) error {
 	// Ctrl-C y el SIGTERM que manda `docker compose down` acaban aqui.
 	ctx, parar := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer parar()
+
+	// El vigilante de dominios vive aparte del servidor y nunca en el camino de
+	// una búsqueda: cuando un sitio se muda, quien lo descubre es él, en
+	// segundo plano, y la búsqueda siguiente ya sale bien.
+	go vigilante.Vigilar(ctx)
 
 	errServidor := make(chan error, 1)
 	go func() {

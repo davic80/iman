@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -27,7 +28,11 @@ const EliteTorrentBase = "https://www.elitetorrent.wf"
 // una llamada aparte, así que en el HTML vienen vacíos.
 type EliteTorrent struct {
 	Cliente *Cliente
-	Base    string
+
+	// La base se lee en cada búsqueda y la reescribe el resolutor cuando el
+	// sitio se muda, así que va bajo candado: las dos cosas pasan a la vez.
+	mu   sync.RWMutex
+	base string
 }
 
 // NuevoEliteTorrent crea el conector. Con cliente nil usa uno propio que
@@ -36,33 +41,97 @@ func NuevoEliteTorrent(c *Cliente) *EliteTorrent {
 	if c == nil {
 		c = NuevoCliente(2 * time.Second)
 	}
-	return &EliteTorrent{Cliente: c, Base: EliteTorrentBase}
+	return &EliteTorrent{Cliente: c, base: EliteTorrentBase}
 }
+
+// Si esto deja de compilar es que el conector ya no sabe mudarse y el resolutor
+// lo dejaría atrás en silencio.
+var _ Mudable = (*EliteTorrent)(nil)
 
 func (e *EliteTorrent) Nombre() string { return "EliteTorrent" }
 
 // Dominio es dónde se está buscando hoy. Lo enseña /salud, porque cuando este
 // sitio deja de devolver nada suele ser que se ha mudado.
 func (e *EliteTorrent) Dominio() string {
-	u, err := url.Parse(e.base())
+	u, err := url.Parse(e.Base())
 	if err != nil {
 		return ""
 	}
 	return u.Host
 }
 
-func (e *EliteTorrent) base() string {
-	if e.Base == "" {
+// Base es la URL en la que se busca ahora mismo.
+func (e *EliteTorrent) Base() string {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	if e.base == "" {
 		return EliteTorrentBase
 	}
-	return strings.TrimSuffix(e.Base, "/")
+	return strings.TrimSuffix(e.base, "/")
+}
+
+// Mudar cambia el dominio. Lo llama el resolutor cuando ha verificado que el
+// sitio se ha movido; el conector se fía porque no es quien para juzgarlo.
+func (e *EliteTorrent) Mudar(base string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.base = strings.TrimSuffix(base, "/")
+}
+
+// Semillas son los dominios por los que empezar a buscar el sitio. El orden es
+// el de probabilidad: primero el que funcionaba, y detrás los anteriores, que
+// siguen sirviendo para seguir la redirección al nuevo.
+func (e *EliteTorrent) Semillas() []string {
+	return []string{
+		EliteTorrentBase,
+		"https://www.elitetorrent.ws",
+		"https://www.elitetorrent.pl",
+		"https://elitetorrent.si",
+	}
+}
+
+// Huella es cómo se reconoce a EliteTorrent. Las marcas positivas son de la
+// plantilla, no del contenido: los títulos de las películas cambian cada día,
+// pero la rejilla de resultados y el pie llevan años igual.
+func (e *EliteTorrent) Huella() Huella {
+	return Huella{
+		Contiene:   []string{"elitetorrent", "miniboxs-ficha"},
+		NoContiene: []string{"elitetorrent.click"},
+		// "matrix" es la búsqueda de prueba porque tiene varias entregas: un
+		// título con una sola copia podría desaparecer del sitio y dejarnos
+		// rechazando el dominio bueno.
+		Consulta:    "matrix",
+		MinAciertos: 3,
+	}
+}
+
+// Sondear busca contra una base concreta sin adoptarla. Devuelve el HTML tal
+// cual, para poder mirarle las marcas, y cuántos resultados entendió el parser.
+func (e *EliteTorrent) Sondear(ctx context.Context, base string) (Sondeo, error) {
+	sonda := &EliteTorrent{Cliente: e.Cliente, base: base}
+
+	doc, err := e.Cliente.Documento(ctx, sonda.URLBusqueda(e.Huella().Consulta))
+	if err != nil {
+		return Sondeo{}, err
+	}
+	html, err := doc.Html()
+	if err != nil {
+		return Sondeo{}, fmt.Errorf("no se pudo leer el HTML: %w", err)
+	}
+	// Un parser que revienta con el HTML de un candidato es motivo de sobra
+	// para no adoptarlo, pero no para tumbar al vigilante.
+	rs, err := sonda.parsearBusqueda(doc)
+	if err != nil {
+		return Sondeo{HTML: html}, err
+	}
+	return Sondeo{HTML: html, Resultados: len(rs)}, nil
 }
 
 // URLBusqueda arma la URL de búsqueda. Es un WordPress de toda la vida: la
 // consulta va en ?s= y no hay más parámetros que valgan.
 func (e *EliteTorrent) URLBusqueda(consulta string) string {
 	v := url.Values{"s": {consulta}}
-	return e.base() + "/?" + v.Encode()
+	return e.Base() + "/?" + v.Encode()
 }
 
 func (e *EliteTorrent) Buscar(ctx context.Context, consulta string) ([]Resultado, error) {
@@ -76,7 +145,7 @@ func (e *EliteTorrent) Buscar(ctx context.Context, consulta string) ([]Resultado
 // parsearBusqueda saca los resultados de la página. Va aparte de Buscar para
 // poder probarla contra un HTML guardado, sin tocar la red.
 func (e *EliteTorrent) parsearBusqueda(doc *goquery.Document) ([]Resultado, error) {
-	base, err := url.Parse(e.base())
+	base, err := url.Parse(e.Base())
 	if err != nil {
 		return nil, fmt.Errorf("elitetorrent: base inválida: %w", err)
 	}
@@ -152,7 +221,7 @@ func (e *EliteTorrent) Resolver(ctx context.Context, r *Resultado) error {
 }
 
 func (e *EliteTorrent) parsearFicha(doc *goquery.Document, r *Resultado) error {
-	base, err := url.Parse(e.base())
+	base, err := url.Parse(e.Base())
 	if err != nil {
 		return fmt.Errorf("elitetorrent: base inválida: %w", err)
 	}
@@ -227,7 +296,7 @@ func (e *EliteTorrent) Descargar(ctx context.Context, torrent string) (io.ReadCl
 // usuario, así que sin esta comprobación cualquiera podría usar Imán para
 // pedir en su nombre lo que quisiera, incluida la red interna del servidor.
 func (e *EliteTorrent) esMia(dir string) error {
-	base, err := url.Parse(e.base())
+	base, err := url.Parse(e.Base())
 	if err != nil {
 		return fmt.Errorf("elitetorrent: base inválida: %w", err)
 	}

@@ -508,6 +508,11 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 
 ## 14. Fases
 
+> **Dónde vamos:** fases 0 y 1 hechas. De la fase 2 está hecho el resolutor
+> entero (cascada, verificación, `estado.json`, `/salud`) y verificado en vivo:
+> se le dio un dominio muerto y encontró y adoptó el bueno él solo. Quedan
+> DonTorrent y MejorTorrent.
+
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
 respondiendo. Validar el despliegue *antes* de que haya nada que desplegar es lo

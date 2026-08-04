@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,6 +107,41 @@ func (c *Cliente) Traer(ctx context.Context, dir string) (io.ReadCloser, error) 
 		Reader: io.LimitReader(resp.Body, MaxCuerpo),
 		cerrar: resp.Body,
 	}, nil
+}
+
+// Destino dice en qué URL se acaba tras seguir las redirecciones.
+//
+// Es como se encuentra el dominio nuevo de un sitio que se ha mudado: los
+// viejos suelen quedarse un tiempo redirigiendo al que funciona. El cuerpo se
+// descarta, aquí solo interesa dónde se aterriza.
+func (c *Cliente) Destino(ctx context.Context, dir string) (string, error) {
+	u, err := url.Parse(dir)
+	if err != nil {
+		return "", fmt.Errorf("url inválida %q: %w", dir, err)
+	}
+	if err := c.esperarTurno(ctx, u.Host); err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dir, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", c.ua)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("pidiendo %s: %w", dir, err)
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, io.LimitReader(resp.Body, MaxCuerpo))
+
+	// Request.URL es la de la última petición de la cadena, que es justo la
+	// que interesa. Del resto de la URL no queremos nada: el sitio vive en el
+	// dominio, no en la página a la que nos haya dejado.
+	final := *resp.Request.URL
+	final.Path, final.RawQuery, final.Fragment = "", "", ""
+	return strings.TrimSuffix(final.String(), "/"), nil
 }
 
 // esperarTurno bloquea hasta que le toque a este host.

@@ -13,6 +13,7 @@ import (
 
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/conectores"
+	"github.com/davic80/iman/internal/dominios"
 	"github.com/davic80/iman/internal/titulos"
 )
 
@@ -165,6 +166,59 @@ func TestSaludReflejaLoQuePasa(t *testing.T) {
 	cuerpo := pedir(t, h, "/salud").Body.String()
 	if !strings.Contains(cuerpo, "pastilla-bien") {
 		t.Error("/salud debería dar el sitio por vivo tras una búsqueda buena")
+	}
+}
+
+// vigilanteFalso finge ser el resolutor de dominios.
+type vigilanteFalso map[string]dominios.Comprobacion
+
+func (v vigilanteFalso) Comprobaciones() map[string]dominios.Comprobacion {
+	return v
+}
+
+func TestSaludCuentaLoQueSabeDelDominio(t *testing.T) {
+	cfg := Config{Addr: ":0", Version: "prueba", TiempoBusqueda: time.Second}
+	s, err := Nuevo(cfg, mudo(), buscador.Nuevo(mudo(), cfg.TiempoBusqueda, &sitioFalso{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ConVigilante(vigilanteFalso{"Falso": {
+		Base: "https://sitio.test", Cuando: time.Now(), Origen: "telegram",
+	}})
+
+	cuerpo := pedir(t, s.Handler(), "/salud").Body.String()
+	// Que se vea por dónde apareció el dominio es lo que permite saber, cuando
+	// algo va mal, si el sitio se ha mudado o es que se ha roto el parser.
+	if !strings.Contains(cuerpo, "telegram") {
+		t.Error("/salud no dice por qué camino se encontró el dominio")
+	}
+}
+
+// Un sitio cuyo dominio no se encuentra es el peor caso: no es que vaya lento,
+// es que no se sabe dónde está. Tiene que decirlo con todas las letras.
+func TestSaludAvisaSiNoHayDominioBueno(t *testing.T) {
+	cfg := Config{Addr: ":0", Version: "prueba", TiempoBusqueda: time.Second}
+	s, err := Nuevo(cfg, mudo(), buscador.Nuevo(mudo(), cfg.TiempoBusqueda, &sitioFalso{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ConVigilante(vigilanteFalso{"Falso": {
+		Cuando: time.Now(), Error: "ningún candidato pasó la verificación (7 probados)",
+	}})
+
+	cuerpo := pedir(t, s.Handler(), "/salud").Body.String()
+	if !strings.Contains(cuerpo, "No se encuentra un dominio bueno") {
+		t.Error("/salud no avisa de que el sitio está ilocalizable")
+	}
+}
+
+// Sin resolutor enganchado /salud tiene que seguir pintándose: es la página que
+// se mira cuando algo va mal, y no puede depender de que todo vaya bien.
+func TestSaludFuncionaSinVigilante(t *testing.T) {
+	h := servidorPrueba(t, &sitioFalso{})
+	cuerpo := pedir(t, h, "/salud").Body.String()
+	if !strings.Contains(cuerpo, "sin verificar") {
+		t.Error("sin vigilante debería decir que el dominio no está verificado")
 	}
 }
 

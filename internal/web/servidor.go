@@ -8,6 +8,7 @@ import (
 
 	"github.com/davic80/iman"
 	"github.com/davic80/iman/internal/buscador"
+	"github.com/davic80/iman/internal/dominios"
 )
 
 // EstadoConector es lo que /salud muestra de cada sitio.
@@ -23,6 +24,13 @@ type EstadoConector struct {
 	Comprobado string
 	Latencia   string
 	Errores    int
+
+	// Lo que sabe el resolutor de dominios: cuándo se verificó por última vez
+	// que ese dominio es de verdad el sitio, y por qué camino se encontró.
+	// Vacíos mientras el vigilante no haya hecho su primera ronda.
+	Verificado string
+	Origen     string
+	Aviso      string
 }
 
 // Clase traduce el estado a un modificador CSS.
@@ -45,7 +53,18 @@ type Servidor struct {
 	plantillas juegoPlantillas
 	arranque   time.Time
 	motor      *buscador.Buscador
+	vigilante  Vigilante
 }
+
+// Vigilante es lo único que /salud necesita del resolutor de dominios: cómo fue
+// la última comprobación de cada sitio.
+type Vigilante interface {
+	Comprobaciones() map[string]dominios.Comprobacion
+}
+
+// ConVigilante engancha el resolutor de dominios, si lo hay. Es opcional: sin
+// él /salud enseña el dominio en uso pero no desde cuándo se sabe que es bueno.
+func (s *Servidor) ConVigilante(v Vigilante) { s.vigilante = v }
 
 // Nuevo monta el servidor. Con motor nil arranca sin sitios que consultar, que
 // es lo que hacen los tests que solo miran el HTML.
@@ -112,8 +131,14 @@ func (s *Servidor) paginaSalud(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// estado traduce la salud que lleva el buscador a algo pintable.
+// estado traduce la salud que lleva el buscador a algo pintable, y le añade lo
+// que sepa el resolutor sobre el dominio.
 func (s *Servidor) estado() []EstadoConector {
+	var verificaciones map[string]dominios.Comprobacion
+	if s.vigilante != nil {
+		verificaciones = s.vigilante.Comprobaciones()
+	}
+
 	salud := s.motor.Salud()
 	out := make([]EstadoConector, 0, len(salud))
 	for _, x := range salud {
@@ -126,6 +151,16 @@ func (s *Servidor) estado() []EstadoConector {
 		if !x.UltimaVez.IsZero() {
 			e.Comprobado = x.UltimaVez.Format("15:04:05")
 			e.Latencia = x.Latencia.Round(time.Millisecond).String()
+		}
+		if v, ok := verificaciones[x.Nombre]; ok {
+			e.Verificado = v.Cuando.Format("15:04:05")
+			e.Origen = v.Origen
+			if v.Error != "" {
+				// Que el resolutor no encuentre dominio bueno es lo más grave
+				// que puede pasarle a un sitio: no es que vaya lento, es que no
+				// se sabe dónde está.
+				e.Aviso = v.Error
+			}
 		}
 		out = append(out, e)
 	}

@@ -17,7 +17,8 @@
     <thead>
       <tr>
         <th>Sitio</th><th>Estado</th><th>Dominio en uso</th>
-        <th>Última comprobación</th><th>Latencia</th><th>Errores</th>
+        <th>Verificado</th><th>Encontrado por</th>
+        <th>Última búsqueda</th><th>Latencia</th><th>Errores</th>
       </tr>
     </thead>
     <tbody>
@@ -26,10 +27,17 @@
         <td>{{.Nombre}}</td>
         <td><span class="pastilla pastilla-{{.Clase}}">{{.Estado}}</span></td>
         <td><code>{{.Dominio}}</code></td>
+        <td>{{if .Verificado}}{{.Verificado}}{{else}}<span class="vacio">sin verificar</span>{{end}}</td>
+        <td>{{.Origen}}</td>
         <td>{{.Comprobado}}</td>
         <td>{{.Latencia}}</td>
         <td>{{.Errores}}</td>
       </tr>
+      {{if .Aviso}}
+      <tr class="aviso-fila">
+        <td colspan="8">No se encuentra un dominio bueno para {{.Nombre}}: {{.Aviso}}</td>
+      </tr>
+      {{end}}
       {{end}}
     </tbody>
   </table>
