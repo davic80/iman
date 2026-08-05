@@ -86,6 +86,39 @@ dicen los listados:
 `mejortorrentt.net`, `naranjatorrent.com`, `www.elitetorrent.wf` (WordPress
 plano), `www43.mejortorrent.eu`
 
+> **Revisión del 2026-08-05, cinco días después.** «Vivo» aguanta poco y
+> «responde 200» no significa «sirve»:
+>
+> | Dominio | Entonces | Ahora |
+> |---|---|---|
+> | `www.elitetorrent.wf` | vivo | ✅ conectado |
+> | `naranjatorrent.com` | vivo | ✅ es espejo de DonTorrent, ya entra como semilla |
+> | `divxtotal.tv` | vivo | ❌ parking: 114 bytes, redirige a `/lander` |
+> | `todotorrents.com`, `pctmix.com` | vivos | ❌ ya no resuelven |
+> | `mejortorrentt.net` | vivo | ❌ ya no resuelve |
+> | `www43.mejortorrent.eu` | vivo | ⛔ veta el ASN del servidor |
+> | `wolfmax4k.com` | vivo (Cloudflare) | ⚠️ sin Cloudflare, pero inservible: ver abajo |
+> | `esdocu.com` | vivo (Cloudflare) | ⚠️ sin Cloudflare, pero es de documentales y cursos, otro nicho |
+>
+> De nueve dominios «vivos», en cinco días quedan dos aprovechables y los dos ya
+> están conectados. **La lista de candidatos hay que rehacerla, no consultarla.**
+
+**Wolfmax4k no sirve, por dos razones independientes** (2026-08-05). Ninguna
+tiene que ver con el anti-bot, que aquí no existe: contesta 200 con el HTML
+entero y sin desafío.
+
+1. **Su buscador siempre devuelve cero.** `POST /buscar` con su token CSRF y su
+   cookie, `GET /buscar/<q>`, `?q=`, con `Referer` y sin él: todos contestan 200
+   con «Resultados Encontrados para : x (  )» y el contador vacío. Y no es que no
+   tenga el título: buscando «dink» da cero teniendo *Dink (The Dink) (2026)* en
+   portada. El índice no responde desde fuera.
+2. **No publica ni magnet ni `.torrent`.** El único botón de descarga apunta a
+   `enlacito.com/s.php?i=<base64>`, un acortador monetizado. En toda la ficha y
+   toda la portada: cero apariciones de `magnet:` y cero de `.torrent`.
+
+La segunda razón sola ya lo descarta aunque el buscador se arreglase: Imán
+promete darte el enlace, no mandarte a una cadena de anuncios.
+
 **Trampa detectada:** `dontorrent.click` responde 200 y parece el sitio, pero es
 un **dominio parkeado en GoDaddy** que sirve anuncios y un iframe a
 `yfdpco1.com`. Un scraper ingenuo se lo tragaría y te serviría basura. De aquí
@@ -148,6 +181,23 @@ semillas, fallan la verificación y se pasa al siguiente.
 Lo que sí tumbaría esto es que **todos** los espejos vetaran el ASN a la vez.
 Entonces harían falta peticiones desde una IP residencial española, y eso es
 hardware en casa, no código.
+
+**Y eso es exactamente lo que pasa con MejorTorrent** (comprobado el
+2026-08-05). Buscado a fondo y no hay espejo bueno:
+
+- `www44`/`www45`, `mejortorrent.eu`, `.one`, `mejortorrentt.net` → no resuelven
+- `mejortorrent.org`, `mejortorrent1.com` → responden 200, pero son parkings de
+  `abovedomains` ("This domain may be for sale"), 1 KB de HTML
+- `t.me/s/MejorTorrentAp`, su canal oficial, sigue anunciando **solo** `www43`
+- `www43` da 1005 por IPv4 **y por IPv6**: el veto es del ASN entero
+
+El propio sitio recomienda usar Cloudflare WARP cuando falla el acceso, que es
+justo el síntoma de esto. Y los dominios parecidos que aparecen al buscar son
+impostores, no espejos: es la situación que la huella está hecha para rechazar.
+
+**Decisión: MejorTorrent queda fuera hasta que haya una IP residencial
+española.** No es un problema de parser — el parser no serviría de nada porque
+desde producción no se llega al HTML. Se salta a la fase 3.
 
 **Desde España hay censura de DNS.** El resolutor del ISP devuelve `0.0.0.0`
 para estos dominios; contra 1.1.1.1 resuelven todos. Al servidor de Alemania no
@@ -296,11 +346,12 @@ Nada de reflexión ni registros mágicos: un slice de conectores construido en
 |---|---|---|---|
 | 1 | **EliteTorrent** (`elitetorrent.pl`) | Baja | ✅ Hecho. WordPress plano, `?s=<query>` |
 | 1 | ~~**DivxTotal** (`divxtotal.tv`)~~ | — | ❌ Aparcado: redirige a `/lander`, ya es un parking |
-| 1 | **TodoTorrents / PcTMix** | Baja | openresty, vivos |
+| 1 | ~~**TodoTorrents / PcTMix**~~ | — | ❌ Muertos: ya no resuelven |
 | 2 | **DonTorrent** (`tomadivx.net`) | Media | ✅ Hecho. La puerta era el `Referer`, no el interstitial |
-| 2 | **MejorTorrent** | Media | Contador `wwwNN.` + Telegram. `www43.mejortorrent.eu` veta el ASN: hará falta espejo |
+| 2 | ~~**MejorTorrent**~~ | — | ⛔ Bloqueado: su único dominio veta el ASN y no tiene espejos. Ver §2 |
 | 2 | ~~**Naranjatorrent**~~ | — | Es el mismo sitio que DonTorrent: ya entra como semilla suya |
-| 3 | **Wolfmax4k**, **Esdocu** | Alta | Cloudflare de verdad. Puede requerir FlareSolverr |
+| 3 | ~~**Wolfmax4k**~~ | — | ❌ Buscador siempre a cero y descarga por acortador. Ver §2 |
+| 3 | **Esdocu** | Baja | Responde sin Cloudflare, pero es documentales y cursos: otro nicho |
 | 4 | Privados (HD-Olimpo, Torrenteros…) | — | Solo si algún día hay cuenta |
 
 Dos correcciones de la tabla original, ambas del 2026-08-05 y ambas del mismo
@@ -570,8 +621,9 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 > entero (cascada, verificación, `estado.json`, `/salud`) y **DonTorrent**, los
 > dos verificados en vivo: al resolutor se le dio un dominio muerto y encontró y
 > adoptó el bueno él solo, y una búsqueda real devuelve resultados de los dos
-> sitios con su `.torrent` descargable. Queda MejorTorrent, que necesita antes un
-> espejo que no vete el ASN del servidor.
+> sitios con su `.torrent` descargable. **La fase 2 se da por cerrada**:
+> MejorTorrent, que era lo que quedaba, no se puede alcanzar desde el servidor y
+> queda aparcado. Siguiente: fase 3.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
@@ -583,11 +635,20 @@ parser de títulos, filtro de castellano, UI de búsqueda, magnet y `.torrent`
 proxiado. Al final de esta fase la app ya sirve para algo.
 
 **Fase 2 — el resolutor de dominios.** La cascada, la verificación de
-autenticidad, `estado.json`, `/salud`. Y con eso montado, DonTorrent (con su
-bypass) y MejorTorrent (con Telegram), que son los que lo necesitan.
+autenticidad, `estado.json`, `/salud`. Y con eso montado, DonTorrent, que es el
+que lo necesita. MejorTorrent iba aquí y se cae: no hay dominio suyo al que el
+servidor pueda llegar.
 
-**Fase 3 — anchura.** TodoTorrents/PcTMix y lo que quede vivo de la lista.
-Deduplicación por infohash con varios sitios de verdad.
+**Fase 3 — anchura.** Sin candidatos: los de la lista del 1 de agosto están
+muertos, parkeados o no sirven enlaces. Antes de escribir un tercer conector hay
+que **rehacer el inventario de sitios**, y el criterio ya no es «responde 200»
+sino las tres cosas que de verdad hacen falta:
+
+1. Se le puede buscar desde el servidor y devuelve resultados
+2. Publica magnet o `.torrent` propio, no un acortador
+3. Tiene contenido en castellano
+
+Cuando haya candidatos, deduplicación por infohash.
 
 **Fase 4 — acabado.** TMDB, agrupación por obra, filtros en la UI.
 
