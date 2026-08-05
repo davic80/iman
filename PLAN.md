@@ -378,7 +378,21 @@ de anuncios.
 
 ---
 
-## 10. qBittorrent
+## 10. qBittorrent — descartado
+
+> **Cerrado el 2026-08-05: no se hace.** El qBittorrent de David vive en una
+> raspberry de su LAN, junto al disco de 10 TB, y se accede por
+> `torrent.ojoalprecio.com` con Cloudflare Access y autenticación por correo.
+> Imán vive en el Hetzner. Conectarlos era posible (service token de Access, o
+> Tailscale entre las dos máquinas) pero **David prefiere copiar el magnet a
+> mano**, que es lo que hace hoy y le vale.
+>
+> Tampoco se mueve Imán a la raspberry: Imán toca qBittorrent una vez por
+> descarga, con un POST al que no le importa la latencia. Eso es acoplamiento
+> flojo y no justifica una mudanza. Lo que Imán hace todo el rato es rascar
+> sitios y servir HTML.
+>
+> Lo de abajo se queda como apunte por si algún día cambia la topología.
 
 **No es difícil.** Tiene API HTTP documentada y son dos peticiones:
 
@@ -531,8 +545,9 @@ Deduplicación por infohash con varios sitios de verdad.
 
 **Fase 4 — acabado.** TMDB, agrupación por obra, filtros en la UI.
 
-**Fase 5 — opcionales.** qBittorrent (cuando me digas la topología), Cloudflare
-vía FlareSolverr, endpoint Torznab si alguna vez montas un *arr.
+**Fase 5 — opcionales.** Cloudflare vía FlareSolverr, endpoint Torznab si
+alguna vez montas un *arr. (qBittorrent estaba aquí y está descartado: ver la
+sección 10.)
 
 ---
 
