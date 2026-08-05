@@ -111,9 +111,48 @@ GET /buscar/matrix
 
 Sin navegador headless. Verificado: la segunda petición pasó de 1.1 KB a 17 KB.
 
+> **Corrección del 2026-08-05, al construir el conector.** Ese interstitial no
+> era de DonTorrent: **era del parking**. Siguiendo el bypass desde
+> `dontorrent.click` se aterriza en `ww38.dontorrent.click`, con "¡Este dominio
+> podría estar en venta!", `godaddy` y `sk-park` en el HTML. Los 17 KB eran su
+> página de anuncios. La lista de `MarcasDeParking` lo caza sin cambios.
+>
+> La puerta real del sitio es mucho más tonta: **comprueba el `Referer`**. Sin
+> él contesta 200 con "Necesitas utilizar el buscador" y cero resultados. Con
+> él, resultados. Aislado y verificado.
+>
+> Y una trampa para el futuro: la palabra "dontorrent" aparece **cero** veces
+> en el HTML de los espejos buenos y **cinco** en el del parking. Usarla como
+> marca positiva de la huella premiaría al impostor.
+
 **Rate limiting real.** EliteTorrent me respondía y, tras unas cuantas
 peticiones seguidas, empezó a dar timeout. Hay que ir con cuidado: límite por
 host, backoff y circuit breaker no son adorno.
+
+**Hay sitios que vetan el ASN de Hetzner** (descubierto el 2026-08-05). No es un
+desafío que se resuelva: Cloudflare devuelve `error code: 1005` a cualquier
+petición desde el rango del servidor, y llega **antes** de que haya JavaScript
+que ejecutar, así que FlareSolverr no sirve de nada aquí.
+
+| Dominio | Desde Hetzner |
+|---|---|
+| `dontorrent.management` (el que el sitio anuncia como oficial) | 403, `error code: 1005` |
+| `www43.mejortorrent.eu` | 403, `error code: 1005` |
+| `donproxies.com` (su proxy oficial) | 403 |
+
+La salida no es pelearse con el bloqueo, es **usar otro dominio del mismo
+sitio**: TomaDivx y NaranjaTorrent sirven el catálogo de DonTorrent y no vetan a
+nadie. Encaja con el resolutor sin tocarlo: los dominios vetados se quedan como
+semillas, fallan la verificación y se pasa al siguiente.
+
+Lo que sí tumbaría esto es que **todos** los espejos vetaran el ASN a la vez.
+Entonces harían falta peticiones desde una IP residencial española, y eso es
+hardware en casa, no código.
+
+**Desde España hay censura de DNS.** El resolutor del ISP devuelve `0.0.0.0`
+para estos dominios; contra 1.1.1.1 resuelven todos. Al servidor de Alemania no
+le afecta, pero al desarrollar desde casa engaña: parece que el sitio está
+muerto cuando lo que está muerto es la respuesta del DNS.
 
 **El servidor.** `46.225.211.9` es Hetzner, Núremberg. No está en España, así
 que los bloqueos por orden judicial a ISPs españoles no aplican.
@@ -255,14 +294,19 @@ Nada de reflexión ni registros mágicos: un slice de conectores construido en
 
 | Fase | Sitio | Dificultad | Notas |
 |---|---|---|---|
-| 1 | **EliteTorrent** (`elitetorrent.wf`) | Baja | WordPress plano, `?s=<query>`. Verificado: devuelve "Resultados de matrix" |
-| 1 | **DivxTotal** (`divxtotal.tv`) | Baja | Vivo, sin Cloudflare |
+| 1 | **EliteTorrent** (`elitetorrent.pl`) | Baja | ✅ Hecho. WordPress plano, `?s=<query>` |
+| 1 | ~~**DivxTotal** (`divxtotal.tv`)~~ | — | ❌ Aparcado: redirige a `/lander`, ya es un parking |
 | 1 | **TodoTorrents / PcTMix** | Baja | openresty, vivos |
-| 2 | **DonTorrent** | Media | Interstitial FingerprintJS. Bypass ya resuelto |
-| 2 | **MejorTorrent** | Media | Contador `wwwNN.` + canal de Telegram |
-| 2 | **Naranjatorrent** | Baja | Vivo, por explorar |
+| 2 | **DonTorrent** (`tomadivx.net`) | Media | ✅ Hecho. La puerta era el `Referer`, no el interstitial |
+| 2 | **MejorTorrent** | Media | Contador `wwwNN.` + Telegram. `www43.mejortorrent.eu` veta el ASN: hará falta espejo |
+| 2 | ~~**Naranjatorrent**~~ | — | Es el mismo sitio que DonTorrent: ya entra como semilla suya |
 | 3 | **Wolfmax4k**, **Esdocu** | Alta | Cloudflare de verdad. Puede requerir FlareSolverr |
 | 4 | Privados (HD-Olimpo, Torrenteros…) | — | Solo si algún día hay cuenta |
+
+Dos correcciones de la tabla original, ambas del 2026-08-05 y ambas del mismo
+tipo: **lo que se ve desde el navegador de casa no es lo que ve el servidor.**
+DivxTotal parecía vivo y es un parking; Naranjatorrent parecía un sitio nuevo y
+es un espejo de uno que ya teníamos.
 
 El primer conector se construye entero (parser, tests, verificación) antes de
 tocar el segundo. Es el que define la forma de la interfaz; hacer tres a medias
@@ -522,10 +566,12 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 
 ## 14. Fases
 
-> **Dónde vamos:** fases 0 y 1 hechas. De la fase 2 está hecho el resolutor
-> entero (cascada, verificación, `estado.json`, `/salud`) y verificado en vivo:
-> se le dio un dominio muerto y encontró y adoptó el bueno él solo. Quedan
-> DonTorrent y MejorTorrent.
+> **Dónde vamos:** fases 0 y 1 hechas. De la fase 2 están hechos el resolutor
+> entero (cascada, verificación, `estado.json`, `/salud`) y **DonTorrent**, los
+> dos verificados en vivo: al resolutor se le dio un dominio muerto y encontró y
+> adoptó el bueno él solo, y una búsqueda real devuelve resultados de los dos
+> sitios con su `.torrent` descargable. Queda MejorTorrent, que necesita antes un
+> espejo que no vete el ASN del servidor.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
@@ -540,7 +586,7 @@ proxiado. Al final de esta fase la app ya sirve para algo.
 autenticidad, `estado.json`, `/salud`. Y con eso montado, DonTorrent (con su
 bypass) y MejorTorrent (con Telegram), que son los que lo necesitan.
 
-**Fase 3 — anchura.** DivxTotal, TodoTorrents/PcTMix, Naranjatorrent.
+**Fase 3 — anchura.** TodoTorrents/PcTMix y lo que quede vivo de la lista.
 Deduplicación por infohash con varios sitios de verdad.
 
 **Fase 4 — acabado.** TMDB, agrupación por obra, filtros en la UI.

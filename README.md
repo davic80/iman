@@ -5,10 +5,10 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 2.** Funciona de punta a punta con un solo sitio
-> (EliteTorrent): buscas, filtra el idioma, ordena y te da el magnet o el
-> `.torrent`. El resolutor de dominios ya está montado, así que cuando el sitio
-> se mude Imán lo encontrará solo. Faltan los demás conectores.
+> **Estado: fase 2.** Funciona de punta a punta con dos sitios (**EliteTorrent**
+> y **DonTorrent**): buscas, se consultan en paralelo, filtra el idioma, ordena y
+> te da el magnet o el `.torrent`. El resolutor de dominios ya está montado, así
+> que cuando un sitio se mude Imán lo encontrará solo. Faltan más conectores.
 > Ver [PLAN.md](PLAN.md).
 
 ## Por qué
@@ -41,6 +41,23 @@ De ahí Imán.
 
 Sin base de datos. Un solo contenedor. Plantillas de Go y htmx, sin build de
 JavaScript.
+
+### Sitios conectados
+
+| Sitio | Dominio de partida | Particularidades |
+|---|---|---|
+| EliteTorrent | `www.elitetorrent.wf` | WordPress plano. Publica semillas y magnet |
+| DonTorrent | `tomadivx.net` | Exige un `Referer` suyo para buscar. Ni magnets ni semillas: solo `.torrent` |
+
+El dominio de partida es solo por dónde se empieza: el resolutor lo cambia si
+deja de responder. En DonTorrent no es el dominio que el sitio anuncia como
+oficial, porque ese veta el rango de IPs del servidor; TomaDivx es el mismo
+sitio, el mismo catálogo y la misma plantilla.
+
+DonTorrent no etiqueta el idioma en ninguna parte, así que Imán **supone
+castellano** cuando el título no dice otra cosa. Es su convención: lo que no es
+castellano lo lleva escrito en el título, y lo comprobamos a mano antes de
+confiar en ello.
 
 ## Desarrollo
 

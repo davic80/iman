@@ -63,7 +63,16 @@ func NuevoCliente(intervalo time.Duration) *Cliente {
 
 // Documento pide una URL y devuelve el HTML ya parseado.
 func (c *Cliente) Documento(ctx context.Context, dir string) (*goquery.Document, error) {
-	cuerpo, err := c.Traer(ctx, dir)
+	return c.DocumentoDesde(ctx, dir, "")
+}
+
+// DocumentoDesde es Documento diciendo de qué página se viene.
+//
+// Hay sitios que solo sirven la búsqueda si el Referer es suyo: es su forma de
+// exigir que hayas pasado por el formulario. DonTorrent responde "Necesitas
+// utilizar el buscador" sin él.
+func (c *Cliente) DocumentoDesde(ctx context.Context, dir, referente string) (*goquery.Document, error) {
+	cuerpo, err := c.TraerDesde(ctx, dir, referente)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +87,12 @@ func (c *Cliente) Documento(ctx context.Context, dir string) (*goquery.Document,
 
 // Traer pide una URL y devuelve el cuerpo. Hay que cerrarlo.
 func (c *Cliente) Traer(ctx context.Context, dir string) (io.ReadCloser, error) {
+	return c.TraerDesde(ctx, dir, "")
+}
+
+// TraerDesde es Traer mandando además un Referer. Con referente vacío no manda
+// la cabecera, que es lo mismo que hacía antes.
+func (c *Cliente) TraerDesde(ctx context.Context, dir, referente string) (io.ReadCloser, error) {
 	u, err := url.Parse(dir)
 	if err != nil {
 		return nil, fmt.Errorf("url inválida %q: %w", dir, err)
@@ -93,6 +108,9 @@ func (c *Cliente) Traer(ctx context.Context, dir string) (io.ReadCloser, error) 
 	req.Header.Set("User-Agent", c.ua)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "es-ES,es;q=0.9")
+	if referente != "" {
+		req.Header.Set("Referer", referente)
+	}
 
 	resp, err := c.http.Do(req)
 	if err != nil {

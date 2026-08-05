@@ -59,6 +59,7 @@ func main() {
 func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Resolutor) {
 	cliente := conectores.NuevoCliente(2 * time.Second)
 	elite := conectores.NuevoEliteTorrent(cliente)
+	don := conectores.NuevoDonTorrent(cliente)
 
 	// Que no se pueda guardar el estado no impide arrancar: solo significa que
 	// el siguiente arranque volverá a descubrir los dominios.
@@ -67,10 +68,10 @@ func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Reso
 		log.Warn("no se pudo leer el estado guardado", "ruta", cfg.EstadoPath, "error", err)
 	}
 
-	vigilante := dominios.Nuevo(cliente, log, estado, elite)
+	vigilante := dominios.Nuevo(cliente, log, estado, elite, don)
 	vigilante.Restaurar()
 
-	return buscador.Nuevo(log, cfg.TiempoBusqueda, elite), vigilante
+	return buscador.Nuevo(log, cfg.TiempoBusqueda, elite, don), vigilante
 }
 
 func ejecutar(log *slog.Logger) error {
