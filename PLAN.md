@@ -119,6 +119,63 @@ entero y sin desafío.
 La segunda razón sola ya lo descarta aunque el buscador se arreglase: Imán
 promete darte el enlace, no mandarte a una cadena de anuncios.
 
+### Inventario rehecho (2026-08-06)
+
+43 dominios sondeados desde el servidor, y esta vez el criterio no es «responde
+200» sino los tres requisitos de verdad: **que se le pueda buscar desde el
+servidor, que sirva el enlace él mismo, y que tenga castellano.**
+
+**Aptos — dos:**
+
+| Sitio | Buscar | Enlace | Castellano |
+|---|---|---|---|
+| **DivxTotal** (`divxtotal.foo`) | `?s=<q>`, WordPress, sin anti-bot | `.torrent` propio vía `download_tt.php?u=<base64>` | sí, `inLanguage: es-ES` |
+| **Knaben** (`api.knaben.org/v1`) | API JSON, sin scraping | `magnetUrl` + `hash` | poco, ver abajo |
+
+**DivxTotal ha resucitado.** `divxtotal.tv` es un parking, pero el sitio se mudó
+a `divxtotal.foo` y está vivo y actualizado (subidas hasta julio de 2026).
+Descargado un `.torrent` suyo: 104.577 bytes, bencode válido, servido desde su
+propio dominio. El `download_tt.php?u=<base64>` parece un acortador y no lo es —
+el base64 decodifica a una URL suya. Es la diferencia con Wolfmax4k.
+
+**Knaben es otra cosa y hay que decidirlo aparte.** Es un meta-indexador con API
+JSON sobre trackers internacionales (TPB, 1337x, Nyaa, RuTracker), y es el único
+candidato que da **semillas y tamaño**, que es justo lo que a DonTorrent le
+falta. Pero su castellano es fino. Medido sobre ocho consultas típicas:
+
+| Consulta | Resultados | En castellano | Con semillas |
+|---|---|---|---|
+| el padrino | 67 | 11 | 4 |
+| la casa de papel | 119 | 4 | 2 |
+| torrente | 156 | 27 | 15 |
+| ocho apellidos vascos | 18 | 5 | 3 |
+| los otros | 24 | 11 | 3 |
+| as bestas | 6 | 1 | 1 |
+| el hoyo | 29 | 0 | 0 |
+| campeones | 51 | 2 | 1 |
+
+Cuatro resultados vivos para «el padrino», cuando DonTorrent y EliteTorrent dan
+46 entre los dos. Aporta poco en cantidad; aporta semillas, que no es poco.
+
+**Descartados, con el motivo:**
+
+| Sitio | Motivo |
+|---|---|
+| `torrentazos.com` | «Nothing found» para todas las consultas. Índice muerto |
+| `elitetorrent.one` | **Cáscara**: devuelve la misma página byte a byte para cualquier ruta, incluida una inventada. Portadas servidas desde `yts.mx` y marcas de idioma `fr`. Usa la marca EliteTorrent sin ser EliteTorrent |
+| `1337x.to`, `ext.to`, `torrentgalaxy.one` | Desafío de Cloudflare (403) desde el servidor |
+| `thepiratebay.org` | Responde 5 KB, cáscara de JS. Y Knaben ya lo indexa |
+| `nyaa.si` | Anime, sin castellano |
+| `bitsearch.eu` (= `solidtorrents.to`) | Mismo nicho que Knaben. Queda de recambio |
+| `esdocu.com` | Documentales y cursos: otro nicho |
+| Familia `descargas2020` / `pctnew` / `pctreload` / `pctfenix` / `torrentlocura` / `tumejortorrent` / `torrentrapid` / `grantorrent` | Muertos: ni DNS ni respuesta. Los ocho |
+| `yts.mx`, `torlock.com`, `atomohd.blog`, `elitetorrent.ec`, `elitetorrent.biz`, `divxtotal1.com` | Sin DNS o sin respuesta |
+
+Lo que enseña el inventario: **de 43 dominios sale un solo conector nuevo.** No
+es un mal día de búsqueda, es el estado del terreno. Conviene contar con que la
+fase 3 sea corta y que el mantenimiento de los dos que ya funcionan valga más
+que buscar el tercero.
+
 **Trampa detectada:** `dontorrent.click` responde 200 y parece el sitio, pero es
 un **dominio parkeado en GoDaddy** que sirve anuncios y un iframe a
 `yfdpco1.com`. Un scraper ingenuo se lo tragaría y te serviría basura. De aquí
@@ -345,13 +402,14 @@ Nada de reflexión ni registros mágicos: un slice de conectores construido en
 | Fase | Sitio | Dificultad | Notas |
 |---|---|---|---|
 | 1 | **EliteTorrent** (`elitetorrent.pl`) | Baja | ✅ Hecho. WordPress plano, `?s=<query>` |
-| 1 | ~~**DivxTotal** (`divxtotal.tv`)~~ | — | ❌ Aparcado: redirige a `/lander`, ya es un parking |
+| 1 | **DivxTotal** (`divxtotal.foo`) | Baja | ⏭️ **Siguiente.** `.tv` es parking, pero el sitio se mudó al `.foo` y está vivo |
 | 1 | ~~**TodoTorrents / PcTMix**~~ | — | ❌ Muertos: ya no resuelven |
 | 2 | **DonTorrent** (`tomadivx.net`) | Media | ✅ Hecho. La puerta era el `Referer`, no el interstitial |
 | 2 | ~~**MejorTorrent**~~ | — | ⛔ Bloqueado: su único dominio veta el ASN y no tiene espejos. Ver §2 |
 | 2 | ~~**Naranjatorrent**~~ | — | Es el mismo sitio que DonTorrent: ya entra como semilla suya |
 | 3 | ~~**Wolfmax4k**~~ | — | ❌ Buscador siempre a cero y descarga por acortador. Ver §2 |
 | 3 | **Esdocu** | Baja | Responde sin Cloudflare, pero es documentales y cursos: otro nicho |
+| 3 | **Knaben** (`api.knaben.org/v1`) | Baja | API JSON, única fuente con semillas. Castellano fino: decidir aparte |
 | 4 | Privados (HD-Olimpo, Torrenteros…) | — | Solo si algún día hay cuenta |
 
 Dos correcciones de la tabla original, ambas del 2026-08-05 y ambas del mismo
@@ -639,16 +697,10 @@ autenticidad, `estado.json`, `/salud`. Y con eso montado, DonTorrent, que es el
 que lo necesita. MejorTorrent iba aquí y se cae: no hay dominio suyo al que el
 servidor pueda llegar.
 
-**Fase 3 — anchura.** Sin candidatos: los de la lista del 1 de agosto están
-muertos, parkeados o no sirven enlaces. Antes de escribir un tercer conector hay
-que **rehacer el inventario de sitios**, y el criterio ya no es «responde 200»
-sino las tres cosas que de verdad hacen falta:
-
-1. Se le puede buscar desde el servidor y devuelve resultados
-2. Publica magnet o `.torrent` propio, no un acortador
-3. Tiene contenido en castellano
-
-Cuando haya candidatos, deduplicación por infohash.
+**Fase 3 — anchura.** Inventario rehecho el 6 de agosto: de 43 dominios sale
+**DivxTotal (`divxtotal.foo`)**, y ese es el tercer conector. Knaben queda como
+decisión aparte, porque no es más de lo mismo: es una API con semillas y poco
+castellano. Con tres sitios, deduplicación por infohash.
 
 **Fase 4 — acabado.** TMDB, agrupación por obra, filtros en la UI.
 
