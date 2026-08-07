@@ -28,6 +28,17 @@ func documento(t *testing.T, nombre string) *goquery.Document {
 	return doc
 }
 
+// documentoDeCadena es para los trozos de HTML escritos a mano, cuando lo que
+// se prueba es un caso que ninguna captura real trae.
+func documentoDeCadena(t *testing.T, html string) *goquery.Document {
+	t.Helper()
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatalf("parseando HTML: %v", err)
+	}
+	return doc
+}
+
 func TestEliteTorrentURLBusqueda(t *testing.T) {
 	e := NuevoEliteTorrent(nil)
 	quiero := "https://www.elitetorrent.wf/?s=el+padrino"

@@ -167,6 +167,13 @@ func (d *DivxTotal) parsearBusqueda(doc *goquery.Document) ([]Resultado, error) 
 			Info:     titulos.Analizar(titulo),
 		}
 
+		// En la lista no hay ni idioma ni bandera: eso solo sale en la ficha,
+		// que no se pide hasta que alguien quiere descargar. Así que aquí vale
+		// la convención del sitio, la misma que en DonTorrent: lo que no es
+		// castellano lo lleva escrito en el título. Sin esto la búsqueda entera
+		// se cae en el filtro de idioma por venir en blanco.
+		r.Info.Idioma = idiomaPorDefecto(r.Info.Idioma)
+
 		// Las dos últimas columnas son fecha y peso, en ese orden, y las dos
 		// suelen venir vacías o con "N/A".
 		if celdas.Length() >= 4 {

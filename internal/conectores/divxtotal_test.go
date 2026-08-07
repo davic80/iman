@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/davic80/iman/internal/titulos"
 )
 
@@ -49,6 +48,38 @@ func TestDivxTotalParsearBusqueda(t *testing.T) {
 	// Este sitio no publica semillas: -1 es "no se sabe", que no es 0.
 	if primero.SemillasConocidas() {
 		t.Errorf("Semillas = %d, quiero desconocidas", primero.Semillas)
+	}
+}
+
+// La lista no dice el idioma en ninguna parte (la bandera solo sale en la
+// ficha, y la ficha no se pide para pintar resultados). Si esto sale en blanco,
+// el filtro de castellano se lleva por delante la búsqueda entera y el sitio
+// aparece como si no hubiera contestado. Pasó en producción.
+func TestSinIdiomaEnLaListaSeSuponeCastellano(t *testing.T) {
+	d := NuevoDivxTotal(nil)
+	rs, err := d.parsearBusqueda(documento(t, "divxtotal-busqueda.html"))
+	if err != nil {
+		t.Fatalf("parsearBusqueda: %v", err)
+	}
+	for _, r := range rs {
+		if r.Info.Idioma == titulos.Desconocido {
+			t.Errorf("%q salió sin idioma", r.Titulo)
+		}
+	}
+
+	// Pero el título manda cuando dice algo: la suposición no lo pisa.
+	rs, err = d.parsearBusqueda(documentoDeCadena(t,
+		`<table class="table"><tbody><tr>`+
+			`<td><a href="/peliculas/x/">Una Peli (Latino)</a></td><td></td>`+
+			`</tr></tbody></table>`))
+	if err != nil {
+		t.Fatalf("parsearBusqueda: %v", err)
+	}
+	if len(rs) != 1 {
+		t.Fatalf("salieron %d resultados, quiero 1", len(rs))
+	}
+	if rs[0].Info.Idioma != titulos.Latino {
+		t.Errorf("Idioma = %v, quiero latino", rs[0].Info.Idioma)
 	}
 }
 
@@ -146,11 +177,8 @@ func TestUnDataSrcRotoNoPasa(t *testing.T) {
 	}
 	d := NuevoDivxTotal(NuevoCliente(0))
 	for nombre, codificado := range casos {
-		html := `<a class="linktorrent" data-src="` + codificado + `" href="x">Descargar</a>`
-		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-		if err != nil {
-			t.Fatalf("%s: %v", nombre, err)
-		}
+		doc := documentoDeCadena(t,
+			`<a class="linktorrent" data-src="`+codificado+`" href="x">Descargar</a>`)
 
 		enlace, err := enlaceTorrent(doc)
 		if err != nil {

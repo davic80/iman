@@ -199,6 +199,9 @@ func (d *DonTorrent) parsearBusqueda(doc *goquery.Document) ([]Resultado, error)
 //
 // Solo se aplica cuando el título no ha dicho nada: si el título trae marca,
 // manda el título y este conector no la pisa.
+//
+// Lo usa también DivxTotal, que sí etiqueta el idioma pero solo en la ficha, y
+// la ficha no se pide para pintar la lista.
 func idiomaPorDefecto(i titulos.Idioma) titulos.Idioma {
 	if i == titulos.Desconocido {
 		return titulos.Castellano

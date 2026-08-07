@@ -55,7 +55,8 @@ deja de responder. En DonTorrent no es el dominio que el sitio anuncia como
 oficial, porque ese veta el rango de IPs del servidor; TomaDivx es el mismo
 sitio, el mismo catálogo y la misma plantilla.
 
-DonTorrent no etiqueta el idioma en ninguna parte, así que Imán **supone
+DonTorrent no etiqueta el idioma en ninguna parte y DivxTotal solo lo etiqueta
+en la ficha, que no se pide para pintar la lista. En los dos casos Imán **supone
 castellano** cuando el título no dice otra cosa. Es su convención: lo que no es
 castellano lo lleva escrito en el título, y lo comprobamos a mano antes de
 confiar en ello.
