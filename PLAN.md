@@ -402,7 +402,7 @@ Nada de reflexión ni registros mágicos: un slice de conectores construido en
 | Fase | Sitio | Dificultad | Notas |
 |---|---|---|---|
 | 1 | **EliteTorrent** (`elitetorrent.pl`) | Baja | ✅ Hecho. WordPress plano, `?s=<query>` |
-| 1 | **DivxTotal** (`divxtotal.foo`) | Baja | ⏭️ **Siguiente.** `.tv` es parking, pero el sitio se mudó al `.foo` y está vivo |
+| 1 | **DivxTotal** (`divxtotal.foo`) | Baja | ✅ Hecho. `.tv` es parking, pero el sitio se mudó al `.foo`. El enlace bueno va en un `data-src` en base64 |
 | 1 | ~~**TodoTorrents / PcTMix**~~ | — | ❌ Muertos: ya no resuelven |
 | 2 | **DonTorrent** (`tomadivx.net`) | Media | ✅ Hecho. La puerta era el `Referer`, no el interstitial |
 | 2 | ~~**MejorTorrent**~~ | — | ⛔ Bloqueado: su único dominio veta el ASN y no tiene espejos. Ver §2 |
@@ -675,13 +675,12 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 
 ## 14. Fases
 
-> **Dónde vamos:** fases 0 y 1 hechas. De la fase 2 están hechos el resolutor
-> entero (cascada, verificación, `estado.json`, `/salud`) y **DonTorrent**, los
-> dos verificados en vivo: al resolutor se le dio un dominio muerto y encontró y
-> adoptó el bueno él solo, y una búsqueda real devuelve resultados de los dos
-> sitios con su `.torrent` descargable. **La fase 2 se da por cerrada**:
-> MejorTorrent, que era lo que quedaba, no se puede alcanzar desde el servidor y
-> queda aparcado. Siguiente: fase 3.
+> **Dónde vamos:** fases 0, 1 y 2 hechas. La 2 se cerró con el resolutor entero
+> (cascada, verificación, `estado.json`, `/salud`) y **DonTorrent**, los dos
+> verificados en vivo; MejorTorrent, que era lo que quedaba, no se alcanza desde
+> el servidor y queda aparcado. En la **fase 3** está hecho **DivxTotal**, el
+> tercer conector y única cosecha del inventario rehecho. Queda decidir Knaben y
+> la deduplicación por infohash.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y

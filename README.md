@@ -5,11 +5,11 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 2.** Funciona de punta a punta con dos sitios (**EliteTorrent**
-> y **DonTorrent**): buscas, se consultan en paralelo, filtra el idioma, ordena y
-> te da el magnet o el `.torrent`. El resolutor de dominios ya está montado, así
-> que cuando un sitio se mude Imán lo encontrará solo. Faltan más conectores.
-> Ver [PLAN.md](PLAN.md).
+> **Estado: fase 3.** Funciona de punta a punta con tres sitios
+> (**EliteTorrent**, **DonTorrent** y **DivxTotal**): buscas, se consultan en
+> paralelo, filtra el idioma, ordena y te da el magnet o el `.torrent`. El
+> resolutor de dominios ya está montado, así que cuando un sitio se mude Imán lo
+> encontrará solo. Ver [PLAN.md](PLAN.md).
 
 ## Por qué
 
@@ -48,6 +48,7 @@ JavaScript.
 |---|---|---|
 | EliteTorrent | `www.elitetorrent.wf` | WordPress plano. Publica semillas y magnet |
 | DonTorrent | `tomadivx.net` | Exige un `Referer` suyo para buscar. Ni magnets ni semillas: solo `.torrent` |
+| DivxTotal | `divxtotal.foo` | El botón de descarga va a un acortador; el enlace bueno está en un `data-src` en base64. Declara el idioma |
 
 El dominio de partida es solo por dónde se empieza: el resolutor lo cambia si
 deja de responder. En DonTorrent no es el dominio que el sitio anuncia como
