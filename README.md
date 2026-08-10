@@ -37,7 +37,7 @@ De ahí Imán.
 | Conectores | Uno por sitio. Buscan y parsean |
 | Motor de fan-out | Los lanza en paralelo con presupuesto de tiempo y aísla los que fallan |
 | Clasificador | Saca idioma, calidad, año y episodio del título. Aquí vive el filtro de castellano |
-| Deduplicador | Funde por infohash y agrupa por obra |
+| Deduplicador | Junta en una fila el mismo torrent de varios sitios, sin perder el enlace de ninguno |
 
 Sin base de datos. Un solo contenedor. Plantillas de Go y htmx, sin build de
 JavaScript.
@@ -54,6 +54,13 @@ El dominio de partida es solo por dónde se empieza: el resolutor lo cambia si
 deja de responder. En DonTorrent no es el dominio que el sitio anuncia como
 oficial, porque ese veta el rango de IPs del servidor; TomaDivx es el mismo
 sitio, el mismo catálogo y la misma plantilla.
+
+Cuando dos sitios publican lo mismo, va en una sola fila. Con infohash es
+certeza; sin él —que es lo normal, porque el hash vive en el magnet y el magnet
+en la ficha— se apuesta por el parecido: misma obra, mismo año, mismo capítulo,
+misma calidad y pesos que no se contradigan. Como es una apuesta, **el sitio que
+se queda detrás sigue ahí, con su enlace**: si Imán se equivoca juntándolos, no
+te ha escondido nada.
 
 DonTorrent no etiqueta el idioma en ninguna parte y DivxTotal solo lo etiqueta
 en la ficha, que no se pide para pintar la lista. En los dos casos Imán **supone

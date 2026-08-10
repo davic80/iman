@@ -31,6 +31,7 @@ type datosBuscar struct {
 type vistaResultado struct {
 	Titulo     string
 	Sitio      string
+	Otros      []vistaOtroSitio // Los demás sitios que tienen lo mismo
 	Idioma     string
 	Dudoso     bool
 	Calidad    string
@@ -39,6 +40,14 @@ type vistaResultado struct {
 	Año        string
 	Ficha      string
 	URLMagnet  string
+	URLTorrent string
+}
+
+// vistaOtroSitio es un sitio que publica el mismo torrent que la fila. Va con
+// su enlace propio: la fusión es una apuesta, así que si Imán se ha equivocado
+// juntándolos, desde aquí se llega igual a lo que publica cada uno.
+type vistaOtroSitio struct {
+	Sitio      string
 	URLTorrent string
 }
 
@@ -69,7 +78,7 @@ func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
 	s.pintar(w, r, "buscar", datos)
 }
 
-func vista(r conectores.Resultado) vistaResultado {
+func vista(r buscador.Resultado) vistaResultado {
 	v := vistaResultado{
 		Titulo:     r.Titulo,
 		Sitio:      r.Sitio,
@@ -78,8 +87,14 @@ func vista(r conectores.Resultado) vistaResultado {
 		Calidad:    string(r.Info.Calidad),
 		Tamaño:     conectores.FormatearTamaño(r.Tamaño),
 		Ficha:      r.Ficha,
-		URLMagnet:  enlaceA("/magnet", r),
-		URLTorrent: enlaceA("/torrent", r),
+		URLMagnet:  enlaceA("/magnet", r.Resultado),
+		URLTorrent: enlaceA("/torrent", r.Resultado),
+	}
+	for _, o := range r.Repetidos {
+		v.Otros = append(v.Otros, vistaOtroSitio{
+			Sitio:      o.Sitio,
+			URLTorrent: enlaceA("/torrent", o),
+		})
 	}
 	if r.Info.Año > 0 {
 		v.Año = strconv.Itoa(r.Info.Año)

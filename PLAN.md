@@ -321,7 +321,8 @@ Siete piezas:
 3. **Motor de fan-out** — lanza los conectores en paralelo con presupuesto de
    tiempo, aísla fallos
 4. **Clasificador** — extrae idioma, calidad, año, temporada/episodio del título
-5. **Deduplicador** — por infohash, y agrupa por obra
+5. **Deduplicador** — por infohash cuando se sabe, y si no por parecido entre
+   sitios distintos, sin tirar el enlace de ninguno
 6. **Enriquecedor TMDB** — carátula y sinopsis
 7. **UI** — plantillas Go + htmx
 
@@ -500,6 +501,24 @@ Campos deliberadamente cercanos a Torznab (`InfoHash`, `SizeBytes`, `Seeders`,
 **Deduplicación por `InfoHash`.** El mismo torrent aparece en varios sitios; se
 funde en una entrada que recuerda de dónde vino. Cuando no hay infohash (algunos
 sitios solo dan `.torrent`), se cae a una clave normalizada de título+tamaño.
+
+> **Hecho el 10 de agosto**, con dos correcciones que salieron de los datos
+> reales:
+>
+> - El infohash casi nunca se sabe a tiempo. Vive en el magnet, el magnet vive
+>   en la ficha y las fichas solo se piden cuando el usuario pincha. De tres
+>   conectores solo EliteTorrent publica magnets en la lista, así que la clave
+>   segura cubre poquísimo y la de parecido hace el trabajo.
+> - Título+tamaño no vale como clave: **DonTorrent no publica el peso nunca** y
+>   DivxTotal solo a veces. La clave es obra (sin artículo inicial) + año +
+>   capítulo + calidad, y el tamaño solo **veta** la fusión cuando los dos se
+>   saben y no cuadran.
+>
+> Y una regla que no estaba escrita: fundir por parecido es una apuesta, así que
+> **la fila conserva el enlace de todos los sitios**. Nunca se tira un
+> resultado. Dos entradas del mismo sitio tampoco se funden: si el sitio las
+> publica aparte, él sabrá por qué (DivxTotal tiene la misma película en
+> `/peliculas` y en `/peliculas-hd`).
 
 **Agrupación por obra** vía TMDB: una ficha de "Dune: Parte Dos" con sus
 calidades dentro, en vez de doce filas sueltas.

@@ -276,6 +276,20 @@ code {
 
 .etiqueta--sitio { color: var(--iman); border-color: var(--iman); }
 
+/* Los demás sitios que tienen lo mismo. Se subrayan al pasar por encima
+   porque, a diferencia del resto de etiquetas, se pueden pinchar: cada uno
+   lleva a su propio .torrent. */
+.etiqueta--otro {
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.etiqueta--otro:hover,
+.etiqueta--otro:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 .resultado-acciones {
   display: flex;
   gap: 0.4rem;

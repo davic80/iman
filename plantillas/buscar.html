@@ -44,6 +44,8 @@
           {{with .Año}}<span class="etiqueta">{{.}}</span>{{end}}
           {{with .Tamaño}}<span class="etiqueta">{{.}}</span>{{end}}
           <span class="etiqueta etiqueta--sitio">{{.Sitio}}</span>
+          {{range .Otros}}<a class="etiqueta etiqueta--sitio etiqueta--otro" href="{{.URLTorrent}}"
+            title="También está en {{.Sitio}}: bajar su .torrent">{{.Sitio}}</a>{{end}}
         </p>
       </div>
       <div class="resultado-acciones">

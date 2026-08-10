@@ -304,9 +304,10 @@ func TestFundeRepetidosDelMismoSitio(t *testing.T) {
 	}
 }
 
-// Dos resultados distintos con la misma pinta no son el mismo: sin infohash,
-// fundirlos por título perdería versiones buenas.
-func TestNoFundeLoQueSoloSeParece(t *testing.T) {
+// Sin infohash no hay certeza, pero dos sitios que publican lo mismo con la
+// misma pinta van en una fila. Fundir no es tirar: el otro sitio queda apuntado
+// con su enlace, así que si la apuesta sale mal no se ha perdido nada.
+func TestJuntaEnUnaFilaLoQueSeParece(t *testing.T) {
 	uno := &falso{nombre: "Uno", resultado: []conectores.Resultado{
 		res("Uno", "peli", titulos.Castellano, titulos.Cal1080p),
 	}}
@@ -315,8 +316,18 @@ func TestNoFundeLoQueSoloSeParece(t *testing.T) {
 	}}
 
 	b := Nuevo(mudo(), time.Second, uno, dos)
-	if got := b.Buscar(context.Background(), "peli", Opciones{}); len(got.Resultados) != 2 {
-		t.Errorf("%d resultados, quiero 2: son de sitios distintos y sin hash", len(got.Resultados))
+	got := b.Buscar(context.Background(), "peli", Opciones{})
+
+	if len(got.Resultados) != 1 {
+		t.Fatalf("%d resultados, quiero 1", len(got.Resultados))
+	}
+	if sitios := got.Resultados[0].Sitios(); len(sitios) != 2 {
+		t.Errorf("Sitios() = %v, quiero los dos", sitios)
+	}
+	// Y el que se queda detrás conserva su ficha, que es por donde se llega a
+	// lo que publica él.
+	if len(got.Resultados[0].Repetidos) != 1 || got.Resultados[0].Repetidos[0].Ficha == "" {
+		t.Errorf("el repetido salió sin ficha: %+v", got.Resultados[0].Repetidos)
 	}
 }
 

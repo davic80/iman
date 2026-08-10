@@ -47,7 +47,7 @@ type Opciones struct {
 // completa que es la respuesta.
 type Busqueda struct {
 	Consulta    string
-	Resultados  []conectores.Resultado
+	Resultados  []Resultado
 	Descartados int // Cuántos se filtraron por idioma
 	Fallos      []Fallo
 	Duracion    time.Duration
@@ -119,9 +119,11 @@ func (b *Buscador) Buscar(ctx context.Context, consulta string, op Opciones) Bus
 	}
 	grupo.Wait()
 
+	// Se filtra antes de fundir: un resultado en latino no tiene por qué entrar
+	// en una fila y arrastrar a ella un sitio que no se va a poder enseñar.
 	utiles, descartados := filtrar(crudos, op)
-	utiles = fundir(utiles)
-	ordenar(utiles, consulta)
+	filas := fundir(utiles)
+	ordenar(filas, consulta)
 
 	// Los fallos van siempre en el mismo orden: si no, /salud y la página de
 	// resultados bailan entre recargas sin que haya cambiado nada.
@@ -133,7 +135,7 @@ func (b *Buscador) Buscar(ctx context.Context, consulta string, op Opciones) Bus
 
 	return Busqueda{
 		Consulta:    consulta,
-		Resultados:  utiles,
+		Resultados:  filas,
 		Descartados: descartados,
 		Fallos:      fallos,
 		Duracion:    time.Since(inicio),
@@ -185,39 +187,15 @@ func filtrar(rs []conectores.Resultado, op Opciones) (utiles []conectores.Result
 	return utiles, descartados
 }
 
-// fundir quita los repetidos.
-//
-// Por infohash cuando se sabe, que es la única forma segura de decir que dos
-// cosas son el mismo torrent. Todavía no se sabe casi nunca, porque el hash
-// vive en la ficha y las fichas se piden solo cuando el usuario pincha; por eso
-// el otro criterio es la propia URL, que caza los repetidos dentro de un mismo
-// sitio. Agrupar por título parecido es otra cosa y va en la interfaz.
-func fundir(rs []conectores.Resultado) []conectores.Resultado {
-	vistos := make(map[string]bool, len(rs))
-	out := rs[:0]
-	for _, r := range rs {
-		clave := r.InfoHash()
-		if clave == "" {
-			clave = r.Sitio + "\x00" + r.Ficha
-		}
-		if vistos[clave] {
-			continue
-		}
-		vistos[clave] = true
-		out = append(out, r)
-	}
-	return out
-}
-
 // ordenar pone delante lo que el usuario querría ver primero.
-func ordenar(rs []conectores.Resultado, consulta string) {
+func ordenar(rs []Resultado, consulta string) {
 	// La relevancia se calcula una vez por resultado y no dentro de la
 	// comparación, que se ejecuta unas cuantas veces por elemento.
 	puntos := make(map[string]int, len(rs))
 	for _, r := range rs {
-		puntos[r.Sitio+"\x00"+r.Ficha] = relevancia(consulta, r)
+		puntos[r.Sitio+"\x00"+r.Ficha] = relevancia(consulta, r.Resultado)
 	}
-	puntuacion := func(r conectores.Resultado) int { return puntos[r.Sitio+"\x00"+r.Ficha] }
+	puntuacion := func(r Resultado) int { return puntos[r.Sitio+"\x00"+r.Ficha] }
 
 	sort.SliceStable(rs, func(i, j int) bool {
 		a, b := rs[i], rs[j]
