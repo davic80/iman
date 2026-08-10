@@ -720,9 +720,13 @@ servidor pueda llegar.
 decisión aparte, porque no es más de lo mismo: es una API con semillas y poco
 castellano. Con tres sitios, deduplicación por infohash.
 
-**Fase 4 — acabado.** TMDB, agrupación por obra, filtros en la UI.
+**Fase 4 — novedades.** Una portada de últimas subidas en castellano, sin tener
+que buscar nada: Imán se pasa solo por los sitios cada cierto tiempo y deja la
+lista hecha. Ver la sección 16.
 
-**Fase 5 — opcionales.** Cloudflare vía FlareSolverr, endpoint Torznab si
+**Fase 5 — acabado.** TMDB, agrupación por obra, filtros en la UI.
+
+**Fase 6 — opcionales.** Cloudflare vía FlareSolverr, endpoint Torznab si
 alguna vez montas un *arr. (qBittorrent estaba aquí y está descartado: ver la
 sección 10.)
 
@@ -752,3 +756,64 @@ Fase 0 completa y desplegada, y en cuanto esté verde, el conector de
 EliteTorrent con sus tests. Ese conector es el que fija la forma de la interfaz
 `Connector`, y prefiero descubrir que la interfaz está mal con uno escrito que
 con cinco.
+
+---
+
+## 17. Novedades: los últimos estrenos sin buscar nada
+
+Idea de David, 10 de agosto. Poder buscar está bien, pero lo que se echa en
+falta es entrar y **ver lo último que se ha subido en castellano**, sin teclear
+nada: Imán se pasa solo por los sitios cada cierto tiempo y deja la lista hecha.
+
+### De dónde salen
+
+Cada conector aprende a leer la portada del sitio además de la búsqueda. Probado
+desde el servidor el 10 de agosto:
+
+| Sitio | Página que sirve | ¿Trae fecha? | Nota |
+|---|---|---|---|
+| DivxTotal | `/peliculas/` y `/` | Sí, `dd-mm-aaaa`, del día | Es la misma tabla que la búsqueda: el parser que hay ya vale |
+| DonTorrent | `/` por secciones | No | El id de la ficha es creciente (`/pelicula/30829/…`), así que ordena aunque no haya fecha |
+| EliteTorrent | `/peliculas/` | Por ver | **Su portada cuelga**: 60 s sin devolver un byte, mientras `?s=` responde en un segundo. Hay que tirar del archivo, no de `/` |
+
+### Cómo se refresca
+
+Un rondín en segundo plano, igual que el vigilante de dominios y por las mismas
+razones: nunca en el camino de una petición del usuario, y si un sitio falla se
+queda lo que había. El botón de "actualizar ahora" es el mismo rondín disparado
+a mano, no otro camino distinto.
+
+### Dónde se guarda
+
+Sin base de datos, que es decisión cerrada. Caché en memoria y volcado a JSON en
+el volumen, al lado de `estado.json`. Eso da un arranque en caliente y un tamaño
+acotado por número de elementos.
+
+### El orden
+
+Aquí está la miga. "Lo más reciente" parece obvio y no lo es: DonTorrent no
+publica fecha y de EliteTorrent está por ver. Hay dos relojes posibles y no son
+el mismo:
+
+- **La fecha del sitio.** Es la de verdad, pero falta en al menos un sitio de
+  tres, y donde falta habría que inventarla o dejar esos resultados fuera del
+  orden.
+- **Cuándo lo vio Imán por primera vez.** Vale para los tres por igual y es lo
+  que de verdad significa "novedad" en una portada que se mira cada día. Cuesta
+  que el primer rondín lo vea todo como nuevo de golpe.
+
+Lo segundo es más honesto con los datos que hay, y lo primero se puede enseñar
+al lado cuando el sitio lo diga.
+
+### Preguntas abiertas
+
+1. ¿Solo películas, o también series? Cambia el volumen y el orden: una serie
+   sube un capítulo cada semana y ahogaría a las películas.
+2. ¿Cada cuánto el rondín? Cada hora son ~72 peticiones al día por sitio, que
+   no molesta a nadie; cada día es una sola pasada.
+3. ¿Cuánto se guarda? ¿Los últimos 200 elementos, los últimos 7 días?
+4. "Ordenar por cantidad de resultados": ¿es agrupar por obra y poner delante la
+   película que más versiones o más sitios tiene, como señal de que es el
+   estreno gordo de la semana?
+5. ¿Portada aparte (`/novedades`) o es lo que sale en `/` cuando no has buscado
+   nada?
