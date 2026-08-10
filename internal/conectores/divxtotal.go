@@ -47,6 +47,7 @@ var (
 	_ Mudable     = (*DivxTotal)(nil)
 	_ Resolutor   = (*DivxTotal)(nil)
 	_ Descargador = (*DivxTotal)(nil)
+	_ Novedoso    = (*DivxTotal)(nil)
 )
 
 func (d *DivxTotal) Nombre() string { return "DivxTotal" }
@@ -127,6 +128,17 @@ func (d *DivxTotal) URLBusqueda(consulta string) string {
 
 func (d *DivxTotal) Buscar(ctx context.Context, consulta string) ([]Resultado, error) {
 	doc, err := d.Cliente.Documento(ctx, d.URLBusqueda(consulta))
+	if err != nil {
+		return nil, fmt.Errorf("divxtotal: %w", err)
+	}
+	return d.parsearBusqueda(doc)
+}
+
+// Novedades lee el archivo de películas, que este sitio sirve con la misma
+// tabla que los resultados de búsqueda: mismo parser, y además con la fecha de
+// subida, que es el único de los tres que la publica.
+func (d *DivxTotal) Novedades(ctx context.Context) ([]Resultado, error) {
+	doc, err := d.Cliente.Documento(ctx, d.Base()+"/peliculas/")
 	if err != nil {
 		return nil, fmt.Errorf("divxtotal: %w", err)
 	}

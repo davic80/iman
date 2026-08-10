@@ -46,7 +46,10 @@ func NuevoEliteTorrent(c *Cliente) *EliteTorrent {
 
 // Si esto deja de compilar es que el conector ya no sabe mudarse y el resolutor
 // lo dejaría atrás en silencio.
-var _ Mudable = (*EliteTorrent)(nil)
+var (
+	_ Mudable  = (*EliteTorrent)(nil)
+	_ Novedoso = (*EliteTorrent)(nil)
+)
 
 func (e *EliteTorrent) Nombre() string { return "EliteTorrent" }
 
@@ -136,6 +139,20 @@ func (e *EliteTorrent) URLBusqueda(consulta string) string {
 
 func (e *EliteTorrent) Buscar(ctx context.Context, consulta string) ([]Resultado, error) {
 	doc, err := e.Cliente.Documento(ctx, e.URLBusqueda(consulta))
+	if err != nil {
+		return nil, fmt.Errorf("elitetorrent: %w", err)
+	}
+	return e.parsearBusqueda(doc)
+}
+
+// Novedades lee el archivo de películas, que trae las mismas fichas que una
+// búsqueda y con el mismo HTML.
+//
+// No se pide la portada: `/` se queda colgada más de un minuto sin devolver un
+// byte mientras el resto del sitio contesta en un segundo. Medido el 10 de
+// agosto de 2026 desde el servidor.
+func (e *EliteTorrent) Novedades(ctx context.Context) ([]Resultado, error) {
+	doc, err := e.Cliente.Documento(ctx, e.Base()+"/peliculas/")
 	if err != nil {
 		return nil, fmt.Errorf("elitetorrent: %w", err)
 	}

@@ -123,3 +123,17 @@ type Anfitrion interface {
 type Descargador interface {
 	Descargar(ctx context.Context, torrent string) (io.ReadCloser, error)
 }
+
+// Novedoso lo implementan los conectores que además de buscar saben enseñar lo
+// último que ha subido su sitio.
+//
+// Es una petición sola a una página que el sitio ya tiene hecha, no un recorrido
+// por su catálogo. Y apunta siempre a la sección de películas: lo de "solo
+// películas" se resuelve eligiendo bien la URL, que sale gratis, y no
+// clasificando después lo que venga.
+type Novedoso interface {
+	// Novedades devuelve las últimas subidas, de más nueva a más vieja si el
+	// sitio las sirve así. Casi ninguno publica la fecha, así que el orden que
+	// vale es el que trae la página.
+	Novedades(ctx context.Context) ([]Resultado, error)
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +48,7 @@ var (
 	_ Mudable     = (*DonTorrent)(nil)
 	_ Resolutor   = (*DonTorrent)(nil)
 	_ Descargador = (*DonTorrent)(nil)
+	_ Novedoso    = (*DonTorrent)(nil)
 )
 
 func (d *DonTorrent) Nombre() string { return "DonTorrent" }
@@ -151,6 +153,104 @@ func (d *DonTorrent) pedirBusqueda(ctx context.Context, consulta string) (*goque
 
 // parsearBusqueda saca los resultados. Cada uno es un <p> dentro de #buscador
 // con el enlace a la ficha, un <span> con el formato y una etiqueta de sección.
+// Novedades lee la sección de películas, que aquí es una rejilla de carátulas.
+//
+// La portada también las trae, pero mezcladas con series, música y juegos, y
+// esta página ya viene filtrada a lo que se quiere.
+func (d *DonTorrent) Novedades(ctx context.Context) ([]Resultado, error) {
+	doc, err := d.Cliente.DocumentoDesde(ctx, d.Base()+"/descargar-peliculas", d.Base()+"/")
+	if err != nil {
+		return nil, fmt.Errorf("dontorrent: %w", err)
+	}
+	return d.parsearRejilla(doc)
+}
+
+// parsearRejilla saca las películas de la sección, que no es una lista con
+// títulos sino carátulas enlazadas.
+//
+// El título hay que sacarlo de fuera del texto, porque texto no hay: se coge
+// del nombre del fichero de la carátula ("Carrera-de-bestias-[DVDRip]-[Don
+// Torrent]-[Utag].jpg"), que además trae la calidad. Se prefiere al slug de la
+// URL porque el slug no la lleva. Los dos vienen sin acentos, que es de lo que
+// no hay forma de salir sin pedir la ficha de cada una.
+func (d *DonTorrent) parsearRejilla(doc *goquery.Document) ([]Resultado, error) {
+	base, err := url.Parse(d.Base())
+	if err != nil {
+		return nil, fmt.Errorf("dontorrent: base inválida: %w", err)
+	}
+
+	var out []Resultado
+	vistas := make(map[string]bool)
+	doc.Find(`a[href^="/pelicula/"]`).Each(func(_ int, a *goquery.Selection) {
+		href, ok := a.Attr("href")
+		if !ok || vistas[href] {
+			return
+		}
+
+		titulo, calidad := deLaCaratula(a.Find("img").First())
+		if titulo == "" {
+			titulo = deLaRuta(href)
+		}
+		if titulo == "" {
+			return
+		}
+		vistas[href] = true
+
+		r := Resultado{
+			Sitio:    d.Nombre(),
+			Titulo:   titulo,
+			Ficha:    absoluta(base, href),
+			Semillas: -1,
+			Clientes: -1,
+			Info:     titulos.Analizar(titulo),
+		}
+		if c := titulos.DetectarCalidad(calidad); c != titulos.CalidadDesconocida {
+			r.Info.Calidad = c
+		}
+		r.Info.Idioma = idiomaPorDefecto(r.Info.Idioma)
+
+		out = append(out, r)
+	})
+	return out, nil
+}
+
+// deLaCaratula saca el título y la calidad del nombre del fichero de la imagen.
+func deLaCaratula(img *goquery.Selection) (titulo, calidad string) {
+	src, ok := img.Attr("src")
+	if !ok {
+		return "", ""
+	}
+	// La imagen va servida por un redimensionador, con la de verdad dentro:
+	// images.weserv.nl/?url=https://…/Carrera-de-bestias-[DVDRip]-….jpg
+	nombre := src
+	if i := strings.LastIndex(nombre, "/"); i >= 0 {
+		nombre = nombre[i+1:]
+	}
+	nombre = strings.TrimSuffix(nombre, ".jpg")
+
+	// Todo lo que va entre corchetes son etiquetas del sitio; la primera es la
+	// calidad y el resto son su marca y un identificador.
+	partes := reCorchetes.FindAllStringSubmatch(nombre, -1)
+	if len(partes) > 0 {
+		calidad = partes[0][1]
+	}
+	if i := strings.Index(nombre, "-["); i > 0 {
+		nombre = nombre[:i]
+	}
+	return strings.ReplaceAll(nombre, "-", " "), calidad
+}
+
+// deLaRuta es el recambio cuando la carátula no está: /pelicula/30826/La-odisea.
+func deLaRuta(href string) string {
+	partes := strings.Split(strings.Trim(href, "/"), "/")
+	if len(partes) < 3 {
+		return ""
+	}
+	return strings.ReplaceAll(partes[2], "-", " ")
+}
+
+var reCorchetes = regexp.MustCompile(`\[([^\]]+)\]`)
+
 func (d *DonTorrent) parsearBusqueda(doc *goquery.Document) ([]Resultado, error) {
 	base, err := url.Parse(d.Base())
 	if err != nil {
@@ -255,6 +355,17 @@ func (d *DonTorrent) parsearFicha(doc *goquery.Document, r *Resultado) error {
 	}
 	if r.Torrent == "" {
 		return fmt.Errorf("dontorrent: ficha %s no tiene enlace de descarga", r.Ficha)
+	}
+
+	// La ficha es el único sitio donde el título va escrito de verdad, con sus
+	// acentos. En una búsqueda da igual, porque la lista ya los trae; importa
+	// en las novedades, que salen de una rejilla de carátulas donde el título
+	// hay que deducirlo del nombre del fichero y llega como "Admisin
+	// imposible". Y no es solo estético: sin la letra que falta, esa película
+	// no se funde con la misma de otro sitio.
+	if h2 := strings.TrimSpace(doc.Find("h2.descargarTitulo").First().Text()); h2 != "" {
+		r.Titulo = h2
+		r.Info = titulos.Analizar(h2)
 	}
 
 	for etiqueta, valor := range fichaDonTorrent(doc) {
