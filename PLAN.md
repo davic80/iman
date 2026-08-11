@@ -848,3 +848,24 @@ Dos cosas que solo se ven con datos de verdad:
   sitios. Ahora la espera se dobla (5, 10, 20, 40 min) hasta la ronda normal y
   ahí se queda; en cuanto el sitio contesta se vuelve al ritmo de siempre. Sin
   esto, §11 —comportarse bien y no acabar bloqueado— era papel mojado.
+
+- **DivxTotal está bien; el que no llega es el portátil.** Desde el servidor
+  `divxtotal.foo` se verifica en tres segundos y las rondas van con cero fallos.
+  Lo que falla es la red de casa. Conviene recordarlo antes de tocar un conector
+  por un fallo que solo se ve en local.
+
+### Verificado en producción (11 de agosto)
+
+Desplegado y comprobado contra los tres sitios reales: 75 apuntes y **66
+películas** tras fundir, cero fallos, y los dos órdenes dando listas distintas
+—ninguna alfabética, que era el defecto del día anterior—.
+
+Lo que solo se puede probar en el servidor y ya está probado:
+
+- **El arranque en caliente.** Seis segundos después de reiniciar el contenedor
+  la portada ya tenía las 66 películas con su edad real ("hace 3 minutos"), no
+  puesta a cero: el JSON del volumen hace su trabajo y un despliegue no deja la
+  portada vacía durante una hora.
+- **El botón.** Devuelve un 303 y la ronda va por detrás; un cliente conforme
+  aterriza en la portada con su orden. Si ya hay una ronda en marcha no se lanza
+  otra, así que para verlo disparar de verdad hay que pedirlo en frío.
