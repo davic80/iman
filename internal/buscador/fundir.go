@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/davic80/iman/internal/conectores"
+	"github.com/davic80/iman/internal/titulos"
 )
 
 // Resultado es una fila de la lista: un torrent y todos los sitios donde se ha
@@ -30,7 +31,11 @@ func (r Resultado) Sitios() []string {
 	return out
 }
 
-// fundir junta en una sola fila los resultados que son el mismo torrent.
+// Fundir junta en una sola fila los resultados que son el mismo torrent.
+//
+// Es público porque la portada de novedades agrupa lo mismo: si allí se
+// juntaran las películas con otro criterio, los mismos datos saldrían agrupados
+// de dos maneras distintas según por qué página se entre.
 //
 // Hay dos formas de decirlo, y son muy distintas de fiar:
 //
@@ -42,7 +47,7 @@ func (r Resultado) Sitios() []string {
 //     es una apuesta, no una certeza, así que solo se hace entre sitios
 //     distintos y sin contradecir los tamaños. Dos entradas del mismo sitio no
 //     se tocan: si el sitio las publica por separado, él sabrá por qué.
-func fundir(rs []conectores.Resultado) []Resultado {
+func Fundir(rs []conectores.Resultado) []Resultado {
 	var out []Resultado
 
 	// Primera vuelta: lo que se sabe seguro. El infohash cuando lo hay, y si no
@@ -173,7 +178,7 @@ func puntosDeEnlace(r conectores.Resultado) int {
 // torrent en sitios distintos. Vacía cuando no hay obra: sin título limpio no
 // se puede afirmar nada, y el año o la calidad por sí solos no distinguen nada.
 func claveDeParecido(r conectores.Resultado) string {
-	obra := sinArticulo(r.Info.Obra)
+	obra := titulos.SinArticulo(r.Info.Obra)
 	if obra == "" {
 		return ""
 	}
@@ -184,19 +189,4 @@ func claveDeParecido(r conectores.Resultado) string {
 		strconv.Itoa(r.Info.Episodio),
 		string(r.Info.Calidad),
 	}, "\x00")
-}
-
-// sinArticulo quita el artículo inicial del título.
-//
-// Es la diferencia entre "The Matrix Resurrections" de un sitio y "Matrix
-// Resurrections" del otro, que es la misma película. Solo se hace para comparar
-// entre sí: el título que se enseña es el que escribió el sitio, y la búsqueda
-// sigue mirando el original, que si no "the matrix" no encontraría nada.
-func sinArticulo(obra string) string {
-	for _, art := range [...]string{"the ", "el ", "la ", "los ", "las ", "un ", "una "} {
-		if resto := strings.TrimPrefix(obra, art); resto != obra {
-			return resto
-		}
-	}
-	return obra
 }

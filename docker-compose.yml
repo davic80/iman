@@ -24,9 +24,12 @@ services:
     environment:
       # Qué dominio funciona para cada sitio. Ver el volumen de abajo.
       IMAN_ESTADO: /datos/estado.json
+      # Lo último que ha subido cada sitio, para que la portada de novedades no
+      # salga vacía después de cada despliegue.
+      IMAN_NOVEDADES: /datos/novedades.json
     volumes:
       # Único estado persistente de la app. Perderlo no rompe nada: obliga a
-      # redescubrir los dominios en el siguiente arranque.
+      # redescubrir los dominios y a esperar una ronda de novedades.
       - estado:/datos
     networks:
       proxy:

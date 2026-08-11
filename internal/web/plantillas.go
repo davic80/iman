@@ -13,7 +13,7 @@ import (
 // paginas son las plantillas de contenido. Cada una se compila junto a base.html
 // en su propio conjunto: si se parsearan todas a la vez, el segundo
 // {{define "contenido"}} pisaria al primero y la ultima pagina ganaria siempre.
-var paginas = []string{"buscar", "salud"}
+var paginas = []string{"buscar", "novedades", "salud"}
 
 type juegoPlantillas map[string]*template.Template
 

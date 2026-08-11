@@ -177,3 +177,19 @@ func TestObraIgualEntreSitios(t *testing.T) {
 		}
 	}
 }
+
+func TestSinArticulo(t *testing.T) {
+	casos := map[string]string{
+		"the matrix resurrections": "matrix resurrections",
+		"el padrino":               "padrino",
+		"la leyenda del samurai":   "leyenda del samurai",
+		"matrix":                   "matrix",
+		"lassie":                   "lassie", // Empieza por "la" pero no es artículo
+		"":                         "",
+	}
+	for entra, quiero := range casos {
+		if got := SinArticulo(entra); got != quiero {
+			t.Errorf("SinArticulo(%q) = %q, quiero %q", entra, got, quiero)
+		}
+	}
+}

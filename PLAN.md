@@ -630,6 +630,7 @@ iman/
 │   ├── conectores/             uno por sitio + interfaz + testdata/
 │   ├── dominios/               resolutor, verificación, estado.json
 │   ├── buscador/               fan-out, timeouts, circuit breaker, caché
+│   ├── novedades/            ✓ rondín horario, almacén y portada
 │   ├── titulos/                parser de idioma, calidad, temporada
 │   └── tmdb/
 ├── plantillas/               ✓
@@ -694,12 +695,12 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 
 ## 14. Fases
 
-> **Dónde vamos:** fases 0, 1 y 2 hechas. La 2 se cerró con el resolutor entero
-> (cascada, verificación, `estado.json`, `/salud`) y **DonTorrent**, los dos
-> verificados en vivo; MejorTorrent, que era lo que quedaba, no se alcanza desde
-> el servidor y queda aparcado. En la **fase 3** está hecho **DivxTotal**, el
-> tercer conector y única cosecha del inventario rehecho. Queda decidir Knaben y
-> la deduplicación por infohash.
+> **Dónde vamos:** fases 0, 1, 2 y 3 hechas, y la 4 con ellas. La 3 se cerró con
+> **DivxTotal** —tercer conector y única cosecha del inventario rehecho— y con la
+> deduplicación, que junta por infohash cuando lo hay y por parecido cuando no.
+> La **fase 4** es `/novedades`: el rondín horario, el almacén en JSON y la
+> portada con sus dos órdenes, verificada en vivo. Lo único que sigue abierto de
+> las fases viejas es **Knaben**.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
@@ -720,9 +721,9 @@ servidor pueda llegar.
 decisión aparte, porque no es más de lo mismo: es una API con semillas y poco
 castellano. Con tres sitios, deduplicación por infohash.
 
-**Fase 4 — novedades.** Una portada de últimas subidas en castellano, sin tener
-que buscar nada: Imán se pasa solo por los sitios cada cierto tiempo y deja la
-lista hecha. Ver la sección 16.
+**Fase 4 — novedades.** Hecha. Una portada de últimas subidas en castellano sin
+tener que buscar nada: Imán se pasa solo por los sitios cada hora y deja la lista
+hecha. Ver la sección 17.
 
 **Fase 5 — acabado.** TMDB, agrupación por obra, filtros en la UI.
 
@@ -805,15 +806,45 @@ el mismo:
 Lo segundo es más honesto con los datos que hay, y lo primero se puede enseñar
 al lado cuando el sitio lo diga.
 
-### Preguntas abiertas
+### Lo que se decidió (David, 10 de agosto)
 
-1. ¿Solo películas, o también series? Cambia el volumen y el orden: una serie
-   sube un capítulo cada semana y ahogaría a las películas.
-2. ¿Cada cuánto el rondín? Cada hora son ~72 peticiones al día por sitio, que
-   no molesta a nadie; cada día es una sola pasada.
-3. ¿Cuánto se guarda? ¿Los últimos 200 elementos, los últimos 7 días?
-4. "Ordenar por cantidad de resultados": ¿es agrupar por obra y poner delante la
-   película que más versiones o más sitios tiene, como señal de que es el
-   estreno gordo de la semana?
-5. ¿Portada aparte (`/novedades`) o es lo que sale en `/` cuando no has buscado
-   nada?
+1. **Solo películas**, normales y de animación, sin porno. Sale gratis: los tres
+   sitios tienen una sección de películas y solo hay que pedir esa URL. No se
+   clasifica nada después, que es donde se cuelan los errores.
+2. **Cada hora**, y una ronda al arrancar. Si algún sitio falla se vuelve a los
+   cinco minutos: en el primer arranque el rondín llega antes de que el vigilante
+   sepa dónde vive cada sitio, y esperar una hora por eso deja la portada coja.
+3. **Las dos cosas**: siete días y tope de 200 apuntes. Miden cosas distintas —
+   una es "esto ya no es novedad" y la otra "esto ya no cabe en una portada".
+4. **Los dos órdenes**, en pestañas: por lo último visto y por en cuántos sitios
+   está. Lo segundo agrupa con el mismo `Fundir` que la búsqueda; si aquí se
+   juntara con otro criterio, los mismos datos saldrían agrupados de dos maneras
+   según por dónde se entre.
+5. **Pestaña aparte**, `/novedades`. La raíz sigue siendo el buscador.
+
+### Lo que quedó hecho (10 de agosto)
+
+`internal/novedades`, con el rondín, el almacén y la portada. Verificado en vivo
+contra los sitios reales: 60 películas en la primera ronda, ninguna descartada
+por idioma, 25 fichas abiertas para completarlas y DivxTotal fallando por llegar
+antes de que su dominio estuviera resuelto — que es justo el caso que motiva el
+reintento corto.
+
+Dos cosas que solo se ven con datos de verdad:
+
+- **El orden de la rejilla es un dato.** En una ronda todo comparte el "visto",
+  así que sin guardar el puesto que ocupaba cada película en la página del sitio
+  la portada sale **en orden alfabético**. Los sitios publican de más nuevo a más
+  viejo: eso es información y se guarda.
+- **Fundir casi no funde aquí, y está bien.** De 60 apuntes solo dos obras
+  coincidían entre sitios, y las dos con calidades distintas (DVDRip contra
+  1080p): son releases diferentes, y juntarlas habría sido mentir.
+
+### Lo que enseñó dejarlo toda la noche (11 de agosto)
+
+- **El reintento corto se tenía que espaciar.** DivxTotal no falló solo al
+  arrancar: no se alcanza desde este portátil, así que falló en todas las rondas
+  y el reintento fijo de cinco minutos habría dado ~288 vueltas al día a los tres
+  sitios. Ahora la espera se dobla (5, 10, 20, 40 min) hasta la ronda normal y
+  ahí se queda; en cuanto el sitio contesta se vuelve al ritmo de siempre. Sin
+  esto, §11 —comportarse bien y no acabar bloqueado— era papel mojado.

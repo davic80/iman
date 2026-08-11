@@ -9,6 +9,7 @@ import (
 	"github.com/davic80/iman"
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/dominios"
+	"github.com/davic80/iman/internal/novedades"
 )
 
 // EstadoConector es lo que /salud muestra de cada sitio.
@@ -53,6 +54,7 @@ type Servidor struct {
 	plantillas juegoPlantillas
 	arranque   time.Time
 	motor      *buscador.Buscador
+	novedades  *novedades.Rondin
 	vigilante  Vigilante
 }
 
@@ -65,6 +67,15 @@ type Vigilante interface {
 // ConVigilante engancha el resolutor de dominios, si lo hay. Es opcional: sin
 // él /salud enseña el dominio en uso pero no desde cuándo se sabe que es bueno.
 func (s *Servidor) ConVigilante(v Vigilante) { s.vigilante = v }
+
+// ConNovedades engancha el rondín que mantiene la portada. También es opcional:
+// sin él /novedades existe pero está vacía, que es lo que ven los tests y lo que
+// se ve en el primer arranque hasta que acabe la primera ronda.
+func (s *Servidor) ConNovedades(r *novedades.Rondin) {
+	if r != nil {
+		s.novedades = r
+	}
+}
 
 // Nuevo monta el servidor. Con motor nil arranca sin sitios que consultar, que
 // es lo que hacen los tests que solo miran el HTML.
@@ -82,6 +93,9 @@ func Nuevo(cfg Config, log *slog.Logger, motor *buscador.Buscador) (*Servidor, e
 		plantillas: plantillas,
 		arranque:   time.Now(),
 		motor:      motor,
+		// Un rondín sin sitios: la portada sale vacía en vez de tener que
+		// comprobar en cada handler si hay alguien detrás.
+		novedades: novedades.Nuevo(log, nil),
 	}, nil
 }
 
@@ -90,6 +104,8 @@ func (s *Servidor) Handler() http.Handler {
 
 	mux.HandleFunc("GET /{$}", s.paginaBuscar)
 	mux.HandleFunc("GET /buscar", s.paginaBuscar)
+	mux.HandleFunc("GET /novedades", s.paginaNovedades)
+	mux.HandleFunc("POST /novedades/refrescar", s.refrescarNovedades)
 	mux.HandleFunc("GET /salud", s.paginaSalud)
 
 	// El magnet y el .torrent los pide el servidor, no el navegador: quien

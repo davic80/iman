@@ -1,0 +1,80 @@
+{{define "titulo"}}Novedades — Imán{{end}}
+
+{{define "contenido"}}
+<section class="buscador">
+  <h1>Novedades</h1>
+  <p class="lema">Lo último que han subido los sitios, solo películas y solo en castellano.</p>
+
+  <div class="barra">
+    <nav class="pestañas" aria-label="Cómo ordenar">
+      <a class="pestaña{{if .PorFecha}} pestaña--activa{{end}}" href="/novedades?orden=fecha"
+         {{if .PorFecha}}aria-current="page"{{end}}>Más recientes</a>
+      <a class="pestaña{{if .PorSitios}} pestaña--activa{{end}}" href="/novedades?orden=sitios"
+         {{if .PorSitios}}aria-current="page"{{end}}>En más sitios</a>
+    </nav>
+
+    <form class="refrescar" action="/novedades/refrescar" method="post">
+      <input type="hidden" name="orden" value="{{.Orden}}">
+      <button type="submit" class="boton boton--flojo" {{if .Rondando}}disabled{{end}}>
+        {{if .Rondando}}Buscando…{{else}}Actualizar{{end}}
+      </button>
+    </form>
+  </div>
+</section>
+
+{{if .SinSitios}}
+<section class="aviso">
+  <h2>No hay ningún sitio conectado</h2>
+  <p>El servidor está en pie pero no tiene a quién preguntar. Mira <a href="/salud">/salud</a>.</p>
+</section>
+{{else if .SinNadaAun}}
+<section class="aviso">
+  <h2>Todavía no hay nada apuntado</h2>
+  <p>
+    {{if .Rondando}}Se están mirando los sitios ahora mismo; recarga en un momento.
+    {{else}}La primera ronda se da al arrancar y luego cada hora. También puedes pedirla
+    con «Actualizar».{{end}}
+  </p>
+</section>
+{{else}}
+<section class="resultados">
+  <p class="resumen">
+    {{len .Peliculas}} película{{if ne (len .Peliculas) 1}}s{{end}}
+    {{with .Ultima}}· visto {{.}}{{end}}
+    {{if .Rondando}}· <span class="rondando">buscando ahora mismo…</span>{{end}}
+  </p>
+
+  <ul class="lista">
+    {{range .Peliculas}}
+    <li class="resultado">
+      <div class="resultado-datos">
+        <h3 class="resultado-titulo">{{.Titulo}}</h3>
+        <p class="etiquetas">
+          <span class="etiqueta etiqueta--cuando">{{.Cuando}}</span>
+          {{with .Calidad}}<span class="etiqueta">{{.}}</span>{{end}}
+          {{with .Año}}<span class="etiqueta">{{.}}</span>{{end}}
+          {{with .Tamaño}}<span class="etiqueta">{{.}}</span>{{end}}
+          <span class="etiqueta etiqueta--sitio">{{.Sitio}}</span>
+          {{range .Otros}}<a class="etiqueta etiqueta--sitio etiqueta--otro" href="{{.URLTorrent}}"
+            title="También está en {{.Sitio}}: bajar su .torrent">{{.Sitio}}</a>{{end}}
+        </p>
+      </div>
+      <div class="resultado-acciones">
+        <button type="button" class="boton boton--copiar" data-magnet="{{.URLMagnet}}">Copiar magnet</button>
+        <a class="boton" href="{{.URLMagnet}}">Abrir</a>
+        <a class="boton boton--flojo" href="{{.URLTorrent}}">.torrent</a>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+
+  {{if .Fallos}}
+  <p class="fallos">
+    En la última ronda no contestaron:
+    {{range $i, $f := .Fallos}}{{if $i}}, {{end}}<strong>{{$f.Sitio}}</strong>{{end}}.
+    Puede faltar algo suyo.
+  </p>
+  {{end}}
+</section>
+{{end}}
+{{end}}

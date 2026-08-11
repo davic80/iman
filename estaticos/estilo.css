@@ -193,6 +193,53 @@ code {
   border-top: 1px solid var(--borde);
 }
 
+/* — Novedades — */
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pestañas {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-alto);
+}
+
+.pestaña {
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  color: var(--tenue);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.pestaña:hover { color: var(--texto); }
+
+.pestaña--activa {
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.refrescar { margin: 0; }
+
+.refrescar button[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Cuándo vio Imán la película por primera vez, que es el orden por defecto de
+   la portada y por tanto lo primero que hay que poder leer de un vistazo. */
+.etiqueta--cuando { color: var(--texto); }
+
+.rondando { color: var(--regular); }
+
 /* — Resultados — */
 
 .dudosos {

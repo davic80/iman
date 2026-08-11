@@ -107,3 +107,20 @@ func Obra(titulo string) string {
 	}
 	return strings.TrimSpace(n)
 }
+
+// SinArticulo quita el artículo inicial de una obra ya normalizada.
+//
+// Es la diferencia entre "The Matrix Resurrections" de un sitio y "Matrix
+// Resurrections" del otro, que son la misma película. Solo vale para comparar
+// obras entre sí: lo que se enseña es el título que escribió el sitio, y la
+// búsqueda mira el original, que si no "the matrix" no encontraría nada.
+func SinArticulo(obra string) string {
+	for _, art := range articulos {
+		if resto := strings.TrimPrefix(obra, art); resto != obra {
+			return resto
+		}
+	}
+	return obra
+}
+
+var articulos = [...]string{"the ", "el ", "la ", "los ", "las ", "un ", "una "}

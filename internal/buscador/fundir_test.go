@@ -28,7 +28,7 @@ func pub(sitio, titulo string, cal titulos.Calidad, tamaño int64) conectores.Re
 
 func filas(t *testing.T, rs ...conectores.Resultado) []Resultado {
 	t.Helper()
-	return fundir(rs)
+	return Fundir(rs)
 }
 
 // El caso que motiva todo esto: la misma película en dos sitios, uno con el
@@ -211,22 +211,6 @@ func TestFundirNoSeInventaDatos(t *testing.T) {
 	for _, o := range got[0].Repetidos {
 		if o.Sitio == "DonTorrent" && o.Tamaño != 0 {
 			t.Errorf("a DonTorrent le apareció un peso de %d", o.Tamaño)
-		}
-	}
-}
-
-func TestSinArticulo(t *testing.T) {
-	casos := map[string]string{
-		"the matrix resurrections": "matrix resurrections",
-		"el padrino":               "padrino",
-		"la leyenda del samurai":   "leyenda del samurai",
-		"matrix":                   "matrix",
-		"lassie":                   "lassie", // Empieza por "la" pero no es artículo
-		"":                         "",
-	}
-	for entra, quiero := range casos {
-		if got := sinArticulo(entra); got != quiero {
-			t.Errorf("sinArticulo(%q) = %q, quiero %q", entra, got, quiero)
 		}
 	}
 }

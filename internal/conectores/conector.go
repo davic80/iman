@@ -132,6 +132,11 @@ type Descargador interface {
 // películas" se resuelve eligiendo bien la URL, que sale gratis, y no
 // clasificando después lo que venga.
 type Novedoso interface {
+	// Conector va incluido, como en Mudable, porque el rondín de novedades
+	// maneja estos conectores directamente y necesita saber de quién es cada
+	// resultado que apunta.
+	Conector
+
 	// Novedades devuelve las últimas subidas, de más nueva a más vieja si el
 	// sitio las sirve así. Casi ninguno publica la fecha, así que el orden que
 	// vale es el que trae la página.

@@ -5,11 +5,12 @@ españoles, filtra el idioma de verdad y te da el magnet o el `.torrent`.
 
 Sin latino. Sin VOSE. Sin resultados que dicen "Spanish" y no lo son.
 
-> **Estado: fase 3.** Funciona de punta a punta con tres sitios
+> **Estado: fase 4.** Funciona de punta a punta con tres sitios
 > (**EliteTorrent**, **DonTorrent** y **DivxTotal**): buscas, se consultan en
 > paralelo, filtra el idioma, ordena y te da el magnet o el `.torrent`. El
 > resolutor de dominios ya está montado, así que cuando un sitio se mude Imán lo
-> encontrará solo. Ver [PLAN.md](PLAN.md).
+> encontrará solo. Y en `/novedades` está lo último que han subido, sin buscar
+> nada. Ver [PLAN.md](PLAN.md).
 
 ## Por qué
 
@@ -38,6 +39,7 @@ De ahí Imán.
 | Motor de fan-out | Los lanza en paralelo con presupuesto de tiempo y aísla los que fallan |
 | Clasificador | Saca idioma, calidad, año y episodio del título. Aquí vive el filtro de castellano |
 | Deduplicador | Junta en una fila el mismo torrent de varios sitios, sin perder el enlace de ninguno |
+| Rondín de novedades | Cada hora apunta lo que han subido los sitios, para poder verlo sin buscar |
 
 Sin base de datos. Un solo contenedor. Plantillas de Go y htmx, sin build de
 JavaScript.
@@ -61,6 +63,28 @@ en la ficha— se apuesta por el parecido: misma obra, mismo año, mismo capítu
 misma calidad y pesos que no se contradigan. Como es una apuesta, **el sitio que
 se queda detrás sigue ahí, con su enlace**: si Imán se equivoca juntándolos, no
 te ha escondido nada.
+
+### Novedades
+
+Buscar sirve cuando ya sabes qué quieres. `/novedades` es lo otro: entrar a ver
+qué hay. Cada hora un rondín pasa por la sección de **películas** de cada sitio
+—solo películas, y por la URL, no filtrando después—, apunta lo que no había
+visto antes y se olvida de lo que lleva más de una semana. La página se sirve
+siempre de lo apuntado: entrar en ella no dispara ni una petición a ningún
+sitio. El botón «Actualizar» pide una ronda a mano y vuelve enseguida; la ronda
+sigue por su cuenta.
+
+Se puede ordenar de dos maneras: por lo último que apareció o por en cuántos
+sitios está, que distingue el estreno que ha publicado todo el mundo del relleno
+que solo tiene uno. La fecha que manda es **cuándo lo vio Imán**, no la del
+sitio: solo uno de los tres la publica. Dentro de una misma ronda desempata el
+puesto que ocupaba en la rejilla del sitio, que es el orden en el que él mismo
+lo publicó.
+
+Como las rejillas traen el título a medias y nunca el magnet, el rondín abre
+unas cuantas fichas por ronda —las más nuevas primero— para completarlas. Eso es
+lo que convierte «Admisin imposible» en «Admisión imposible», y de paso lo que
+permite juntarla con la misma película de otro sitio.
 
 DonTorrent no etiqueta el idioma en ninguna parte y DivxTotal solo lo etiqueta
 en la ficha, que no se pide para pintar la lista. En los dos casos Imán **supone
@@ -98,7 +122,9 @@ IMAN_ESTADO=/tmp/estado.json go run ./cmd/iman
 | `IMAN_ADDR` | `:8080` | Dirección de escucha |
 | `IMAN_VERSION` | la del build | Se muestra en `/salud` |
 | `IMAN_ESTADO` | `/datos/estado.json` | Dónde se guardan los dominios vigentes |
+| `IMAN_NOVEDADES` | `/datos/novedades.json` | Dónde se guarda la portada de novedades |
 | `IMAN_TIEMPO_BUSQUEDA` | `20s` | Presupuesto de una búsqueda completa |
+| `IMAN_RONDA_NOVEDADES` | `1h` | Cada cuánto se mira qué han subido los sitios |
 
 ## Despliegue
 

@@ -122,7 +122,7 @@ func (b *Buscador) Buscar(ctx context.Context, consulta string, op Opciones) Bus
 	// Se filtra antes de fundir: un resultado en latino no tiene por qué entrar
 	// en una fila y arrastrar a ella un sitio que no se va a poder enseñar.
 	utiles, descartados := filtrar(crudos, op)
-	filas := fundir(utiles)
+	filas := Fundir(utiles)
 	ordenar(filas, consulta)
 
 	// Los fallos van siempre en el mismo orden: si no, /salud y la página de

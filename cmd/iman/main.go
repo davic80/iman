@@ -21,6 +21,7 @@ import (
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/conectores"
 	"github.com/davic80/iman/internal/dominios"
+	"github.com/davic80/iman/internal/novedades"
 	"github.com/davic80/iman/internal/web"
 )
 
@@ -50,13 +51,14 @@ func main() {
 	}
 }
 
-// motor arma el buscador y el resolutor de dominios con los sitios conectados.
+// motor arma el buscador, el resolutor de dominios y el rondín de novedades con
+// los sitios conectados.
 //
 // El cliente HTTP es uno solo y compartido: el freno que espacia las peticiones
 // va por dominio, así que sitios distintos no se estorban, pero dos conectores
-// del mismo sitio sí se ponen en fila. Eso incluye al resolutor, que así no
-// puede atropellar a un sitio mientras alguien busca en él.
-func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Resolutor) {
+// del mismo sitio sí se ponen en fila. Eso incluye al resolutor y al rondín, que
+// así no pueden atropellar a un sitio mientras alguien busca en él.
+func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Resolutor, *novedades.Rondin) {
 	cliente := conectores.NuevoCliente(2 * time.Second)
 	elite := conectores.NuevoEliteTorrent(cliente)
 	don := conectores.NuevoDonTorrent(cliente)
@@ -72,18 +74,23 @@ func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Reso
 	vigilante := dominios.Nuevo(cliente, log, estado, elite, don, divx)
 	vigilante.Restaurar()
 
-	return buscador.Nuevo(log, cfg.TiempoBusqueda, elite, don, divx), vigilante
+	rondin := novedades.Nuevo(log, novedades.NuevoAlmacen(cfg.NovedadesPath), elite, don, divx)
+	rondin.Cada = cfg.RondaNovedades
+	rondin.Restaurar()
+
+	return buscador.Nuevo(log, cfg.TiempoBusqueda, elite, don, divx), vigilante, rondin
 }
 
 func ejecutar(log *slog.Logger) error {
 	cfg := web.CargarConfig(version)
 
-	busca, vigilante := motor(log, cfg)
+	busca, vigilante, rondin := motor(log, cfg)
 	servidor, err := web.Nuevo(cfg, log, busca)
 	if err != nil {
 		return err
 	}
 	servidor.ConVigilante(vigilante)
+	servidor.ConNovedades(rondin)
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,
@@ -104,6 +111,10 @@ func ejecutar(log *slog.Logger) error {
 	// una búsqueda: cuando un sitio se muda, quien lo descubre es él, en
 	// segundo plano, y la búsqueda siguiente ya sale bien.
 	go vigilante.Vigilar(ctx)
+
+	// El rondín de novedades, igual: la portada se sirve siempre de lo apuntado,
+	// así que entrar en ella no dispara ninguna petición a ningún sitio.
+	go rondin.Vigilar(ctx)
 
 	errServidor := make(chan error, 1)
 	go func() {

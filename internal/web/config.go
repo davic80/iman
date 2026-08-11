@@ -4,6 +4,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/davic80/iman/internal/novedades"
 )
 
 // Config recoge todo lo que se puede tocar sin recompilar. Los valores por
@@ -27,6 +29,14 @@ type Config struct {
 	// Presupuesto de tiempo de una busqueda completa. Lo que no llegue a
 	// tiempo, no llega: se muestran los resultados parciales.
 	TiempoBusqueda time.Duration
+
+	// NovedadesPath es donde se guarda la portada de novedades. Va al lado del
+	// estado y por el mismo motivo: sin el, cada despliegue dejaria la portada
+	// vacia hasta la primera ronda.
+	NovedadesPath string
+
+	// RondaNovedades es cada cuanto se mira que han subido los sitios.
+	RondaNovedades time.Duration
 }
 
 // CargarConfig lee la configuracion del entorno.
@@ -39,6 +49,8 @@ func CargarConfig(versionCompilada string) Config {
 		Version:        env("IMAN_VERSION", versionCompilada),
 		EstadoPath:     env("IMAN_ESTADO", "/datos/estado.json"),
 		TiempoBusqueda: envDuracion("IMAN_TIEMPO_BUSQUEDA", 20*time.Second),
+		NovedadesPath:  env("IMAN_NOVEDADES", "/datos/novedades.json"),
+		RondaNovedades: envDuracion("IMAN_RONDA_NOVEDADES", novedades.CadaPorDefecto),
 	}
 }
 
