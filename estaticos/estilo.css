@@ -374,3 +374,51 @@ code {
   color: var(--tenue);
   font-size: 0.85rem;
 }
+
+/* Filtros. Van encima de la lista, en las dos páginas, y cada botón dice
+   cuántos resultados deja: sin el número hay que pulsarlo para saber si vale
+   la pena, y con listas de sesenta películas eso es ir a ciegas. */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.filtros-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.filtros-nombre {
+  color: var(--tenue);
+  font-size: 0.8rem;
+  margin-right: 0.2rem;
+}
+
+.filtro {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  color: var(--tenue);
+  text-decoration: none;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.filtro:hover { color: var(--texto); }
+
+.filtro--activo {
+  background: var(--iman);
+  border-color: var(--iman);
+  color: #fff;
+}
+
+.filtro--activo .filtro-cuantos { color: #fff; opacity: 0.8; }
+
+.filtro-cuantos { color: var(--tenue); font-variant-numeric: tabular-nums; }
+
+.filtro--quitar { border-style: dashed; }

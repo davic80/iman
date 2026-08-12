@@ -19,6 +19,7 @@ type datosBuscar struct {
 	Consulta      string
 	Buscado       bool // Si hay algo que enseñar debajo del formulario
 	Dudosos       bool
+	Filtros       barraFiltros
 	Resultados    []vistaResultado
 	Descartados   int
 	Fallos        []buscador.Fallo
@@ -52,8 +53,9 @@ type vistaOtroSitio struct {
 }
 
 func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
-	consulta := strings.TrimSpace(r.URL.Query().Get("q"))
-	dudosos := r.URL.Query().Get("dudosos") != ""
+	q := r.URL.Query()
+	consulta := strings.TrimSpace(q.Get("q"))
+	dudosos := q.Get("dudosos") != ""
 
 	datos := datosBuscar{
 		datosBase:     datosBase{Version: s.cfg.Version},
@@ -65,12 +67,16 @@ func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
 	if consulta != "" && !datos.SinConectores {
 		b := s.motor.Buscar(r.Context(), consulta, buscador.Opciones{Dudosos: dudosos})
 
+		f := filtrosDe(q)
 		datos.Buscado = true
 		datos.Descartados = b.Descartados
 		datos.Fallos = b.Fallos
 		datos.Duracion = b.Duracion.Round(time.Millisecond).String()
-		datos.Resultados = make([]vistaResultado, 0, len(b.Resultados))
-		for _, res := range b.Resultados {
+		datos.Filtros = f.barra(b.Resultados, "/", q)
+
+		filtrados := f.aplicar(b.Resultados)
+		datos.Resultados = make([]vistaResultado, 0, len(filtrados))
+		for _, res := range filtrados {
 			datos.Resultados = append(datos.Resultados, vista(res))
 		}
 	}

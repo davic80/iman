@@ -25,6 +25,8 @@
 {{end}}
 
 {{if .Buscado}}
+{{template "filtros" .Filtros}}
+
 <section class="resultados">
   {{if .Resultados}}
   <p class="resumen">
@@ -56,6 +58,15 @@
     </li>
     {{end}}
   </ul>
+  {{else if .Filtros.Puestos}}
+  <section class="aviso">
+    <h2>Nada con esos filtros</h2>
+    <p>
+      Había {{.Filtros.Total}} resultado{{if ne .Filtros.Total 1}}s{{end}} para «{{.Consulta}}»,
+      pero ninguno pasa lo que has filtrado.
+      <a href="{{.Filtros.URLLimpia}}">Quitar los filtros</a>.
+    </p>
+  </section>
   {{else}}
   <section class="aviso">
     <h2>Nada en castellano</h2>

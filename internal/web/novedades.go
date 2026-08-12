@@ -4,22 +4,26 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/novedades"
 )
 
 type datosNovedades struct {
 	datosBase
-	Orden      string
-	PorFecha   bool
-	PorSitios  bool
-	Peliculas  []vistaNovedad
-	Ultima     string // Cuándo fue la última ronda, en relativo
-	Rondando   bool
-	Fallos     []novedades.Fallo
-	SinSitios  bool
-	SinNadaAun bool
+	Orden           string
+	PorFecha        bool
+	PorSitios       bool
+	Filtros         barraFiltros
+	Peliculas       []vistaNovedad
+	Ultima          string // Cuándo fue la última ronda, en relativo
+	Rondando        bool
+	Fallos          []novedades.Fallo
+	SinSitios       bool
+	SinNadaAun      bool
+	SinNadaFiltrado bool // Hay cosas apuntadas, pero los filtros no dejan ninguna
 }
 
 // vistaNovedad es una fila de la portada lista para pintar. Reaprovecha la vista
@@ -32,15 +36,25 @@ type vistaNovedad struct {
 }
 
 func (s *Servidor) paginaNovedades(w http.ResponseWriter, r *http.Request) {
-	orden := novedades.Orden(r.URL.Query().Get("orden")).Valida()
+	q := r.URL.Query()
+	orden := novedades.Orden(q.Get("orden")).Valida()
 	filas := s.novedades.Portada(orden)
 	ultima := s.novedades.Ultima()
+
+	// Los filtros se cuentan sobre todo lo apuntado y se aplican después, para
+	// que los botones sigan diciendo cuánto hay detrás de cada uno.
+	f := filtrosDe(q)
+	todos := make([]buscador.Resultado, 0, len(filas))
+	for _, fila := range filas {
+		todos = append(todos, fila.Resultado)
+	}
 
 	datos := datosNovedades{
 		datosBase:  datosBase{Version: s.cfg.Version},
 		Orden:      string(orden),
 		PorFecha:   orden == novedades.PorFecha,
 		PorSitios:  orden == novedades.PorSitios,
+		Filtros:    f.barra(todos, "/novedades", q),
 		Peliculas:  make([]vistaNovedad, 0, len(filas)),
 		Rondando:   s.novedades.Rondando(),
 		Fallos:     ultima.Fallos,
@@ -51,13 +65,17 @@ func (s *Servidor) paginaNovedades(w http.ResponseWriter, r *http.Request) {
 		datos.Ultima = hace(ultima.Cuando)
 	}
 
-	for _, f := range filas {
+	for _, fila := range filas {
+		if !f.pasaCalidad(fila.Resultado) || !f.pasaSitio(fila.Resultado) {
+			continue
+		}
 		datos.Peliculas = append(datos.Peliculas, vistaNovedad{
-			vistaResultado: vista(f.Resultado),
-			Cuando:         hace(f.Visto),
-			Sitios:         len(f.Sitios()),
+			vistaResultado: vista(fila.Resultado),
+			Cuando:         hace(fila.Visto),
+			Sitios:         len(fila.Sitios()),
 		})
 	}
+	datos.SinNadaFiltrado = len(datos.Peliculas) == 0 && !datos.SinNadaAun
 
 	s.pintar(w, r, "novedades", datos)
 }
@@ -77,7 +95,15 @@ func (s *Servidor) refrescarNovedades(w http.ResponseWriter, r *http.Request) {
 			s.novedades.Rondar(context.Background())
 		}()
 	}
-	http.Redirect(w, r, "/novedades?orden="+r.FormValue("orden"), http.StatusSeeOther)
+	// Se vuelve a la portada tal y como estaba, filtros incluidos: quien pulsa
+	// "Actualizar" quiere lo mismo que estaba mirando, pero recién traído.
+	vuelta := make(url.Values)
+	for _, clave := range []string{"orden", "calidad", "sitio"} {
+		if v := r.FormValue(clave); v != "" {
+			vuelta.Set(clave, v)
+		}
+	}
+	http.Redirect(w, r, conCola("/novedades", vuelta), http.StatusSeeOther)
 }
 
 // hace pone una fecha en palabras. La hora exacta a la que Imán vio una película

@@ -40,6 +40,7 @@ De ahí Imán.
 | Clasificador | Saca idioma, calidad, año y episodio del título. Aquí vive el filtro de castellano |
 | Deduplicador | Junta en una fila el mismo torrent de varios sitios, sin perder el enlace de ninguno |
 | Rondín de novedades | Cada hora apunta lo que han subido los sitios, para poder verlo sin buscar |
+| Filtros | Recortan por calidad y por sitio, en la URL para que el enlace se pueda compartir |
 
 Sin base de datos. Un solo contenedor. Plantillas de Go y htmx, sin build de
 JavaScript.

@@ -15,6 +15,8 @@
 
     <form class="refrescar" action="/novedades/refrescar" method="post">
       <input type="hidden" name="orden" value="{{.Orden}}">
+      <input type="hidden" name="calidad" value="{{.Filtros.Calidad}}">
+      <input type="hidden" name="sitio" value="{{.Filtros.Sitio}}">
       <button type="submit" class="boton boton--flojo" {{if .Rondando}}disabled{{end}}>
         {{if .Rondando}}Buscando…{{else}}Actualizar{{end}}
       </button>
@@ -37,9 +39,21 @@
   </p>
 </section>
 {{else}}
+{{template "filtros" .Filtros}}
+
+{{if .SinNadaFiltrado}}
+<section class="aviso">
+  <h2>Nada con esos filtros</h2>
+  <p>
+    Hay {{.Filtros.Total}} película{{if ne .Filtros.Total 1}}s{{end}} apuntada{{if ne .Filtros.Total 1}}s{{end}},
+    pero ninguna pasa lo que has filtrado.
+    <a href="{{.Filtros.URLLimpia}}">Quitar los filtros</a>.
+  </p>
+</section>
+{{else}}
 <section class="resultados">
   <p class="resumen">
-    {{len .Peliculas}} película{{if ne (len .Peliculas) 1}}s{{end}}
+    {{len .Peliculas}} película{{if ne (len .Peliculas) 1}}s{{end}}{{if .Filtros.Puestos}} de {{.Filtros.Total}}{{end}}
     {{with .Ultima}}· visto {{.}}{{end}}
     {{if .Rondando}}· <span class="rondando">buscando ahora mismo…</span>{{end}}
   </p>
@@ -76,5 +90,6 @@
   </p>
   {{end}}
 </section>
+{{end}}
 {{end}}
 {{end}}

@@ -533,8 +533,15 @@ La app es una caja de búsqueda y una lista: SSR es exactamente la herramienta.
 - **Resultados en streaming.** El fan-out tarda lo que tarde el sitio más lento.
   Con htmx se pintan los resultados según llegan en vez de esperar al último.
   Un conector caído no bloquea la página.
-- **Filtros** de calidad, tamaño, seeders y fuente, en la propia URL para que
-  sean compartibles.
+- **Filtros** de calidad y sitio, en la propia URL para que sean compartibles.
+  Cada botón lleva su recuento, hecho con los demás filtros puestos pero sin el
+  suyo: si no, todos los números dirían lo mismo que ya se está viendo.
+
+  Aquí ponía además "tamaño y seeders", y **no se hacen**, porque los datos no
+  dan: ninguno de los tres sitios publica semillas (siempre llegan a -1) y el
+  tamaño no lo publica DonTorrent nunca ni DivxTotal siempre. Un filtro de
+  tamaño escondería en silencio casi todo el catálogo por no saber cuánto pesa.
+  Si algún día entra una fuente con esos datos —Knaben los tiene—, se recupera.
 - **Botón de copiar magnet** y **descarga de `.torrent`**.
 - **`/salud`** — tabla con cada conector: dominio en uso, última verificación,
   latencia, tasa de error. Dado lo frágil que es esto por naturaleza, saber *qué*

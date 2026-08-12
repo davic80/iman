@@ -1,0 +1,29 @@
+{{define "filtros"}}
+{{if or .Calidades .Sitios}}
+<section class="filtros" aria-label="Filtros">
+  {{if .Calidades}}
+  <div class="filtros-grupo">
+    <span class="filtros-nombre">Calidad</span>
+    {{range .Calidades}}
+    <a class="filtro{{if .Activa}} filtro--activo{{end}}" href="{{.URL}}"
+       {{if .Activa}}aria-current="true"{{end}}>{{.Etiqueta}} <span class="filtro-cuantos">{{.Cuantos}}</span></a>
+    {{end}}{{/* La etiqueta no es el valor: "ninguna" se lee "Sin calidad". */}}
+  </div>
+  {{end}}
+
+  {{if .Sitios}}
+  <div class="filtros-grupo">
+    <span class="filtros-nombre">Sitio</span>
+    {{range .Sitios}}
+    <a class="filtro{{if .Activa}} filtro--activo{{end}}" href="{{.URL}}"
+       {{if .Activa}}aria-current="true"{{end}}>{{.Etiqueta}} <span class="filtro-cuantos">{{.Cuantos}}</span></a>
+    {{end}}
+  </div>
+  {{end}}
+
+  {{if .Puestos}}
+  <a class="filtro filtro--quitar" href="{{.URLLimpia}}">Quitar filtros</a>
+  {{end}}
+</section>
+{{end}}
+{{end}}
