@@ -157,6 +157,34 @@ falta. Pero su castellano es fino. Medido sobre ocho consultas típicas:
 Cuatro resultados vivos para «el padrino», cuando DonTorrent y EliteTorrent dan
 46 entre los dos. Aporta poco en cantidad; aporta semillas, que no es poco.
 
+### Knaben, cerrado: tampoco sirve para enriquecer (12 de agosto)
+
+La idea era no meterlo como cuarto conector sino usarlo para rellenar lo que a
+DonTorrent le falta: semillas y tamaño. La API se porta bien para eso —se puede
+preguntar por infohash con `search_field: "hash"` y devuelve exactamente uno—,
+así que se probó con **26 infohashes de verdad**, sacados de los magnets que ya
+había resuelto el rondín en el servidor.
+
+**De los 17 que se pudieron consultar, cero están en el índice.** Ninguno. No es
+un problema de mayúsculas (probado en los dos casos) ni de la consulta: un hash
+de control de The Pirate Bay responde bien con la misma llamada.
+
+La razón se ve buscando por título: la película sí está, pero es **otra copia**.
+Para «Enola Holmes 3», Knaben tiene 66 resultados —ETHEL, LAMA, KONTRAST, un
+`Eng-Spa`— y ninguno es el que publica EliteTorrent. Son ficheros distintos, con
+hash distinto. Enriquecer por título en vez de por hash sería colgarle a nuestro
+torrent las semillas de otro fichero, que es peor que no decir nada: el número
+que más pesa al elegir sería mentira.
+
+Y aunque estuviera, no escalaría: la API va detrás de Cloudflare y a una
+consulta por segundo empieza a devolver `error code: 1015` a partir de la sexta.
+Una llamada por torrent no es viable, y en lotes no se puede (varios hashes en
+la misma consulta devuelven cero).
+
+**Conclusión: Knaben no entra, ni como conector ni como enriquecimiento.** Lo
+que indexa y lo que indexan los sitios españoles no se tocan. Que las semillas
+sigan sin saberse es la respuesta honesta mientras las fuentes sean estas tres.
+
 **Descartados, con el motivo:**
 
 | Sitio | Motivo |
@@ -706,8 +734,9 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 > **DivxTotal** —tercer conector y única cosecha del inventario rehecho— y con la
 > deduplicación, que junta por infohash cuando lo hay y por parecido cuando no.
 > La **fase 4** es `/novedades`: el rondín horario, el almacén en JSON y la
-> portada con sus dos órdenes, verificada en vivo. Lo único que sigue abierto de
-> las fases viejas es **Knaben**.
+> portada con sus dos órdenes, verificada en vivo. **Knaben queda cerrado**: ni
+> conector ni enriquecimiento, porque ninguno de nuestros infohashes está en su
+> índice. De la 5 están los filtros; quedan TMDB y la agrupación por obra.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
@@ -724,15 +753,17 @@ que lo necesita. MejorTorrent iba aquí y se cae: no hay dominio suyo al que el
 servidor pueda llegar.
 
 **Fase 3 — anchura.** Inventario rehecho el 6 de agosto: de 43 dominios sale
-**DivxTotal (`divxtotal.foo`)**, y ese es el tercer conector. Knaben queda como
-decisión aparte, porque no es más de lo mismo: es una API con semillas y poco
-castellano. Con tres sitios, deduplicación por infohash.
+**DivxTotal (`divxtotal.foo`)**, y ese es el tercer conector. Knaben se dejó
+como decisión aparte y se cerró el 12 de agosto en contra: no comparte ni un
+infohash con lo que publican los sitios españoles. Con tres sitios,
+deduplicación por infohash.
 
 **Fase 4 — novedades.** Hecha. Una portada de últimas subidas en castellano sin
 tener que buscar nada: Imán se pasa solo por los sitios cada hora y deja la lista
 hecha. Ver la sección 17.
 
-**Fase 5 — acabado.** TMDB, agrupación por obra, filtros en la UI.
+**Fase 5 — acabado.** TMDB, agrupación por obra y filtros en la UI. Los filtros
+ya están: calidad y sitio, con su recuento en cada botón.
 
 **Fase 6 — opcionales.** Cloudflare vía FlareSolverr, endpoint Torznab si
 alguna vez montas un *arr. (qBittorrent estaba aquí y está descartado: ver la
