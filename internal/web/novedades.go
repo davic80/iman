@@ -50,7 +50,7 @@ func (s *Servidor) paginaNovedades(w http.ResponseWriter, r *http.Request) {
 	}
 
 	datos := datosNovedades{
-		datosBase:  datosBase{Version: s.cfg.Version},
+		datosBase:  s.base(),
 		Orden:      string(orden),
 		PorFecha:   orden == novedades.PorFecha,
 		PorSitios:  orden == novedades.PorSitios,
@@ -65,12 +65,25 @@ func (s *Servidor) paginaNovedades(w http.ResponseWriter, r *http.Request) {
 		datos.Ultima = hace(ultima.Cuando)
 	}
 
+	// Se aparta primero lo que pasa los filtros y luego se piden las carátulas
+	// de eso y nada más: la portada trae setenta y pico películas y filtrar
+	// después sería preguntar por las que no se van a pintar.
+	var vistas []novedades.Fila
 	for _, fila := range filas {
-		if !f.pasaCalidad(fila.Resultado) || !f.pasaSitio(fila.Resultado) {
-			continue
+		if f.pasaCalidad(fila.Resultado) && f.pasaSitio(fila.Resultado) {
+			vistas = append(vistas, fila)
 		}
+	}
+
+	pintables := make([]buscador.Resultado, 0, len(vistas))
+	for _, fila := range vistas {
+		pintables = append(pintables, fila.Resultado)
+	}
+	fichas := s.fichas(r.Context(), pintables)
+
+	for i, fila := range vistas {
 		datos.Peliculas = append(datos.Peliculas, vistaNovedad{
-			vistaResultado: vista(fila.Resultado),
+			vistaResultado: vista(fila.Resultado, fichas[i]),
 			Cuando:         hace(fila.Visto),
 			Sitios:         len(fila.Sitios()),
 		})

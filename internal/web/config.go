@@ -37,6 +37,12 @@ type Config struct {
 
 	// RondaNovedades es cada cuanto se mira que han subido los sitios.
 	RondaNovedades time.Duration
+
+	// TMDB es la credencial para pedir carátulas y fichas. Es el unico valor
+	// secreto de toda la configuracion: vive en el .env, que no se versiona, y
+	// no aparece en .env.example. Vacia significa "sin carátulas", que es un
+	// modo de funcionamiento normal y no un error.
+	TMDB string
 }
 
 // CargarConfig lee la configuracion del entorno.
@@ -51,6 +57,7 @@ func CargarConfig(versionCompilada string) Config {
 		TiempoBusqueda: envDuracion("IMAN_TIEMPO_BUSQUEDA", 20*time.Second),
 		NovedadesPath:  env("IMAN_NOVEDADES", "/datos/novedades.json"),
 		RondaNovedades: envDuracion("IMAN_RONDA_NOVEDADES", novedades.CadaPorDefecto),
+		TMDB:           env("IMAN_TMDB", ""),
 	}
 }
 

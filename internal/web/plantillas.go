@@ -20,11 +20,13 @@ type juegoPlantillas map[string]*template.Template
 func compilarPlantillas(archivos fs.FS) (juegoPlantillas, error) {
 	juego := make(juegoPlantillas, len(paginas))
 	for _, p := range paginas {
-		// filtros.html va con todas: es un trozo suelto que buscar y novedades
-		// pintan igual, y compilarlo de más en salud no molesta a nadie.
+		// filtros.html y cartel.html van con todas: son trozos sueltos que
+		// buscar y novedades pintan igual, y compilarlos de más en salud no
+		// molesta a nadie.
 		t, err := template.New("base.html").ParseFS(archivos,
 			"plantillas/base.html",
 			"plantillas/filtros.html",
+			"plantillas/cartel.html",
 			"plantillas/"+p+".html",
 		)
 		if err != nil {

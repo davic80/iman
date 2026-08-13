@@ -42,7 +42,16 @@ Deja ahí `docker-compose.yml` y un `.env`:
 ```bash
 PROXY_NETWORK=cloud_default
 IMAN_TAG=latest
+# Carátulas. Opcional: sin esto Imán arranca igual y no habla con TMDB.
+IMAN_TMDB=<el API Read Access Token de themoviedb.org>
 ```
+
+`IMAN_TMDB` es lo único secreto que hay aquí, y por eso vive solo en este
+fichero: no está en `.env.example` ni en el repo. Se pide en
+[themoviedb.org/settings/api](https://www.themoviedb.org/settings/api), tipo
+*Developer*, y es gratis para uso no comercial. Después de tocarlo hace falta
+`docker compose up -d` para que el contenedor lo lea. Para comprobar que ha
+entrado, el log del arranque dice `"carátulas" tmdb=true`.
 
 Autentica contra GHCR una sola vez y arranca:
 

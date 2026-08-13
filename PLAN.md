@@ -352,6 +352,20 @@ Siete piezas:
 5. **Deduplicador** — por infohash cuando se sabe, y si no por parecido entre
    sitios distintos, sin tirar el enlace de ninguno
 6. **Enriquecedor TMDB** — carátula y sinopsis
+
+   > **Hecho el 13 de agosto.** Con una regla que decide casi todo lo demás:
+   > **una carátula equivocada es peor que ninguna**. TMDB es un buscador y
+   > contesta algo a casi cualquier cosa, así que solo pasa el candidato cuyo
+   > título —el castellano o el original, con o sin artículo— es exactamente la
+   > obra que se buscó. Entre homónimas manda el año, porque son remakes; en
+   > las series el año no veta, que el del título de un capítulo es el del
+   > capítulo y no el del estreno.
+   >
+   > Dos decisiones más que salieron por el camino: las imágenes las sirve Imán
+   > desde `/cartel`, por lo mismo que el `.torrent` (una página privada que
+   > carga imágenes de fuera deja de serlo un poco), y todo esto es opcional de
+   > verdad: sin `IMAN_TMDB` no se hace ni una petición y las páginas se pintan
+   > como antes de que TMDB existiera.
 7. **UI** — plantillas Go + htmx
 
 ---
@@ -667,7 +681,7 @@ iman/
 │   ├── buscador/               fan-out, timeouts, circuit breaker, caché
 │   ├── novedades/            ✓ rondín horario, almacén y portada
 │   ├── titulos/                parser de idioma, calidad, temporada
-│   └── tmdb/
+│   └── tmdb/                 ✓ carteles y fichas, con caché y sin clave apagado
 ├── plantillas/               ✓
 ├── estaticos/                ✓
 ├── Dockerfile                ✓
@@ -736,7 +750,8 @@ escrito en tu propio DEPLOY.md de gorilla y merece repetirse.
 > La **fase 4** es `/novedades`: el rondín horario, el almacén en JSON y la
 > portada con sus dos órdenes, verificada en vivo. **Knaben queda cerrado**: ni
 > conector ni enriquecimiento, porque ninguno de nuestros infohashes está en su
-> índice. De la 5 están los filtros; quedan TMDB y la agrupación por obra.
+> índice. De la 5 están los filtros y **TMDB**, que le pone cara a las filas sin
+> arriesgarse a ponerle la cara equivocada; queda la agrupación por obra.
 
 **Fase 0 — el tubo entero, vacío.** Repo, `hello world` en Go, Dockerfile, CI,
 compose, Caddy, DNS. Objetivo: ver `iman.ojoalprecio.com` pidiendo contraseña y
@@ -763,7 +778,11 @@ tener que buscar nada: Imán se pasa solo por los sitios cada hora y deja la lis
 hecha. Ver la sección 17.
 
 **Fase 5 — acabado.** TMDB, agrupación por obra y filtros en la UI. Los filtros
-ya están: calidad y sitio, con su recuento en cada botón.
+ya están: calidad y sitio, con su recuento en cada botón. Y TMDB también:
+carátula, título oficial y sinopsis, servidas por Imán y solo cuando la película
+se ha reconocido sin dudas. Queda la agrupación por obra, que ahora sí tiene de
+dónde agarrarse: el ID de TMDB es la clave que junta doce calidades de la misma
+película en una ficha.
 
 **Fase 6 — opcionales.** Cloudflare vía FlareSolverr, endpoint Torznab si
 alguna vez montas un *arr. (qBittorrent estaba aquí y está descartado: ver la

@@ -1,0 +1,10 @@
+{{/* La carátula de una fila. Se pinta el hueco aunque no haya imagen: si no,
+     las filas que TMDB no reconoce se descolocan respecto a las demás. */}}
+{{define "cartel"}}
+{{- if .Cartel -}}
+<img class="cartel" src="{{.Cartel}}" width="54" height="81" loading="lazy" decoding="async"
+     alt="Carátula de {{.Obra}}"{{with .Sinopsis}} title="{{.}}"{{end}}>
+{{- else -}}
+<span class="cartel cartel--sin" aria-hidden="true">🎬</span>
+{{- end -}}
+{{end}}

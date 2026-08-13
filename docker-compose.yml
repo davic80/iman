@@ -27,6 +27,10 @@ services:
       # Lo último que ha subido cada sitio, para que la portada de novedades no
       # salga vacía después de cada despliegue.
       IMAN_NOVEDADES: /datos/novedades.json
+      # Credencial de TMDB para las carátulas. Es lo único secreto de todo esto:
+      # vive en el .env del servidor, que no se versiona. Si no está, Imán
+      # arranca igual y las páginas salen sin carátulas.
+      IMAN_TMDB: ${IMAN_TMDB:-}
     volumes:
       # Único estado persistente de la app. Perderlo no rompe nada: obliga a
       # redescubrir los dominios y a esperar una ronda de novedades.

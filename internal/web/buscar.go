@@ -12,6 +12,7 @@ import (
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/conectores"
 	"github.com/davic80/iman/internal/titulos"
+	"github.com/davic80/iman/internal/tmdb"
 )
 
 type datosBuscar struct {
@@ -42,6 +43,12 @@ type vistaResultado struct {
 	Ficha      string
 	URLMagnet  string
 	URLTorrent string
+
+	// Lo que ha puesto TMDB, si ha reconocido la película. Vacío es lo normal:
+	// sin clave, sin acierto seguro o sin tiempo, la fila se pinta igual.
+	Cartel   string // URL de la carátula, servida por Imán
+	Obra     string // El título oficial en castellano, para el alt de la imagen
+	Sinopsis string
 }
 
 // vistaOtroSitio es un sitio que publica el mismo torrent que la fila. Va con
@@ -58,7 +65,7 @@ func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
 	dudosos := q.Get("dudosos") != ""
 
 	datos := datosBuscar{
-		datosBase:     datosBase{Version: s.cfg.Version},
+		datosBase:     s.base(),
 		Consulta:      consulta,
 		Dudosos:       dudosos,
 		SinConectores: s.motor.Conectores() == 0,
@@ -74,17 +81,21 @@ func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
 		datos.Duracion = b.Duracion.Round(time.Millisecond).String()
 		datos.Filtros = f.barra(b.Resultados, "/", q)
 
+		// Las fichas se piden solo de lo que se va a enseñar: filtrar primero y
+		// preguntar después ahorra las consultas de las filas que nadie va a ver.
 		filtrados := f.aplicar(b.Resultados)
+		fichas := s.fichas(r.Context(), filtrados)
+
 		datos.Resultados = make([]vistaResultado, 0, len(filtrados))
-		for _, res := range filtrados {
-			datos.Resultados = append(datos.Resultados, vista(res))
+		for i, res := range filtrados {
+			datos.Resultados = append(datos.Resultados, vista(res, fichas[i]))
 		}
 	}
 
 	s.pintar(w, r, "buscar", datos)
 }
 
-func vista(r buscador.Resultado) vistaResultado {
+func vista(r buscador.Resultado, f tmdb.Ficha) vistaResultado {
 	v := vistaResultado{
 		Titulo:     r.Titulo,
 		Sitio:      r.Sitio,
@@ -110,6 +121,13 @@ func vista(r buscador.Resultado) vistaResultado {
 		if r.Info.Episodio > 0 {
 			v.Episodio += fmt.Sprintf("E%02d", r.Info.Episodio)
 		}
+	}
+	// El título que se enseña sigue siendo el del sitio: es el que identifica a
+	// esta copia y no a la película. De TMDB se coge la cara, no el nombre.
+	if f.Cartel != "" {
+		v.Cartel = "/cartel" + f.Cartel
+		v.Obra = f.Titulo
+		v.Sinopsis = f.Sinopsis
 	}
 	return v
 }

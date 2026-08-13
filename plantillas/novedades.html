@@ -61,6 +61,7 @@
   <ul class="lista">
     {{range .Peliculas}}
     <li class="resultado">
+      {{if $.TMDB}}{{template "cartel" .}}{{end}}
       <div class="resultado-datos">
         <h3 class="resultado-titulo">{{.Titulo}}</h3>
         <p class="etiquetas">

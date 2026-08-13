@@ -22,6 +22,7 @@ import (
 	"github.com/davic80/iman/internal/conectores"
 	"github.com/davic80/iman/internal/dominios"
 	"github.com/davic80/iman/internal/novedades"
+	"github.com/davic80/iman/internal/tmdb"
 	"github.com/davic80/iman/internal/web"
 )
 
@@ -91,6 +92,12 @@ func ejecutar(log *slog.Logger) error {
 	}
 	servidor.ConVigilante(vigilante)
 	servidor.ConNovedades(rondin)
+
+	// Sin IMAN_TMDB esto queda apagado y no se habla con nadie: se dice en el
+	// log para que no haya que adivinar por qué la portada sale sin carátulas.
+	carteles := tmdb.Nuevo(cfg.TMDB, log)
+	servidor.ConTMDB(carteles)
+	log.Info("carátulas", "tmdb", carteles.Activo())
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,

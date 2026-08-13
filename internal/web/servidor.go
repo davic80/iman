@@ -10,6 +10,7 @@ import (
 	"github.com/davic80/iman/internal/buscador"
 	"github.com/davic80/iman/internal/dominios"
 	"github.com/davic80/iman/internal/novedades"
+	"github.com/davic80/iman/internal/tmdb"
 )
 
 // EstadoConector es lo que /salud muestra de cada sitio.
@@ -56,6 +57,7 @@ type Servidor struct {
 	motor      *buscador.Buscador
 	novedades  *novedades.Rondin
 	vigilante  Vigilante
+	carteles   *tmdb.Cliente
 }
 
 // Vigilante es lo único que /salud necesita del resolutor de dominios: cómo fue
@@ -76,6 +78,11 @@ func (s *Servidor) ConNovedades(r *novedades.Rondin) {
 		s.novedades = r
 	}
 }
+
+// ConTMDB engancha el enriquecedor de fichas. Opcional también, y de verdad:
+// sin clave de TMDB Imán se comporta exactamente como antes de que existiera,
+// solo que sin carátulas.
+func (s *Servidor) ConTMDB(c *tmdb.Cliente) { s.carteles = c }
 
 // Nuevo monta el servidor. Con motor nil arranca sin sitios que consultar, que
 // es lo que hacen los tests que solo miran el HTML.
@@ -109,9 +116,11 @@ func (s *Servidor) Handler() http.Handler {
 	mux.HandleFunc("GET /salud", s.paginaSalud)
 
 	// El magnet y el .torrent los pide el servidor, no el navegador: quien
-	// busca no tiene por qué acabar conectándose al sitio de torrents.
+	// busca no tiene por qué acabar conectándose al sitio de torrents. Las
+	// carátulas van por lo mismo.
 	mux.HandleFunc("GET /magnet", s.magnet)
 	mux.HandleFunc("GET /torrent", s.torrent)
+	mux.HandleFunc("GET /cartel/{fichero}", s.cartel)
 
 	// Sonda para el HEALTHCHECK del contenedor: texto plano, sin plantillas,
 	// sin tocar nada externo. Solo responde si el proceso esta en pie.
@@ -127,6 +136,15 @@ func (s *Servidor) Handler() http.Handler {
 
 type datosBase struct {
 	Version string
+
+	// TMDB dice si hay carátulas. Lo mira el pie para dar el crédito, que es lo
+	// que TMDB pide a cambio de su API y no se pone cuando no se está usando.
+	TMDB bool
+}
+
+// base son los datos que toda página necesita.
+func (s *Servidor) base() datosBase {
+	return datosBase{Version: s.cfg.Version, TMDB: s.carteles.Activo()}
 }
 
 type datosSalud struct {
@@ -139,7 +157,7 @@ type datosSalud struct {
 
 func (s *Servidor) paginaSalud(w http.ResponseWriter, r *http.Request) {
 	s.pintar(w, r, "salud", datosSalud{
-		datosBase:  datosBase{Version: s.cfg.Version},
+		datosBase:  s.base(),
 		Arranque:   s.arranque.Format("2006-01-02 15:04:05 MST"),
 		EnPie:      time.Since(s.arranque).Truncate(time.Second).String(),
 		Busquedas:  s.motor.Busquedas(),

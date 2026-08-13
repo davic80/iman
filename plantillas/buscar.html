@@ -37,6 +37,7 @@
   <ul class="lista">
     {{range .Resultados}}
     <li class="resultado{{if .Dudoso}} resultado--dudoso{{end}}">
+      {{if $.TMDB}}{{template "cartel" .}}{{end}}
       <div class="resultado-datos">
         <h3 class="resultado-titulo">{{.Titulo}}</h3>
         <p class="etiquetas">

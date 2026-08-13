@@ -41,6 +41,7 @@ De ahí Imán.
 | Deduplicador | Junta en una fila el mismo torrent de varios sitios, sin perder el enlace de ninguno |
 | Rondín de novedades | Cada hora apunta lo que han subido los sitios, para poder verlo sin buscar |
 | Filtros | Recortan por calidad y por sitio, en la URL para que el enlace se pueda compartir |
+| Fichas de TMDB | Le ponen cara a cada fila, y solo cuando está seguro de que es esa película |
 
 Sin base de datos. Un solo contenedor. Plantillas de Go y htmx, sin build de
 JavaScript.
@@ -93,6 +94,26 @@ castellano** cuando el título no dice otra cosa. Es su convención: lo que no e
 castellano lo lleva escrito en el título, y lo comprobamos a mano antes de
 confiar en ello.
 
+### Carátulas
+
+Los sitios publican una cadena de texto y nada más. TMDB tiene la carátula, el
+título oficial y la sinopsis, así que Imán le pregunta por la obra que ha
+deducido del título y pega el resultado en la fila.
+
+La regla es que **una carátula equivocada es peor que ninguna**. TMDB contesta
+algo a casi cualquier cosa —pedirle «El padrino» devuelve también documentales
+sobre El Padrino—, así que solo pasa lo que se llama exactamente igual, con o
+sin artículo, y el año decide entre homónimas: dos películas con el mismo título
+son un remake, y ponerle a una el cartel de la otra es mentir. En las series el
+año no veta, porque el que trae el título de un capítulo es el del capítulo.
+
+Las imágenes las sirve Imán, no `image.tmdb.org`. Es lo mismo que ya se hacía
+con el `.torrent`: la instancia es privada, y una página privada que va cargando
+imágenes de fuera le cuenta a un tercero qué se está mirando.
+
+Todo esto es opcional. Sin `IMAN_TMDB` no se habla con TMDB y las páginas salen
+como antes de que existiera, sin hueco ni sitio vacío.
+
 ## Desarrollo
 
 ```bash
@@ -126,6 +147,18 @@ IMAN_ESTADO=/tmp/estado.json go run ./cmd/iman
 | `IMAN_NOVEDADES` | `/datos/novedades.json` | Dónde se guarda la portada de novedades |
 | `IMAN_TIEMPO_BUSQUEDA` | `20s` | Presupuesto de una búsqueda completa |
 | `IMAN_RONDA_NOVEDADES` | `1h` | Cada cuánto se mira qué han subido los sitios |
+| `IMAN_TMDB` | vacío | Credencial de TMDB para las carátulas. Sin ella, todo funciona igual pero sin carátulas |
+
+`IMAN_TMDB` es el único valor secreto: va en el `.env`, que no se versiona, y no
+está en `.env.example`. Vale tanto el *API Read Access Token* como la *API Key
+(v3)*, que TMDB da en la misma página y son fáciles de confundir.
+
+Los tests de TMDB usan capturas escritas a mano en `internal/tmdb/testdata`.
+Para comprobar contra la API de verdad —y de paso que la clave vale—:
+
+```bash
+IMAN_TMDB=... go test -tags vivo -v ./internal/tmdb/
+```
 
 ## Despliegue
 

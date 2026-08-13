@@ -1,0 +1,39 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg",
+      "genre_ids": [878, 12],
+      "id": 438631,
+      "original_language": "en",
+      "original_title": "Dune",
+      "overview": "Paul Atreides se traslada al planeta más peligroso del universo.",
+      "popularity": 128.882,
+      "poster_path": "/j4NrKxwPKAd6DL7A8YFrJZWnq0G.jpg",
+      "release_date": "2021-09-15",
+      "title": "Dune",
+      "video": false,
+      "vote_average": 7.8,
+      "vote_count": 11683
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/bLwDgWCqRPjZm0nJhZaGdaDGL0d.jpg",
+      "genre_ids": [878, 12],
+      "id": 841,
+      "original_language": "en",
+      "original_title": "Dune",
+      "overview": "En el año 10191 la especia es la sustancia más valiosa del universo.",
+      "popularity": 28.44,
+      "poster_path": "/gjxFOQEQCAAlmwmUgqTTsHl1EWa.jpg",
+      "release_date": "1984-12-14",
+      "title": "Dune",
+      "video": false,
+      "vote_average": 6.3,
+      "vote_count": 2148
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 2
+}

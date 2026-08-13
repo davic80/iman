@@ -27,6 +27,13 @@
 
 <footer class="pie">
   <span>Imán · {{.Version}}</span>
+  {{if .TMDB}}
+  <!-- El crédito es la condición de TMDB para dejar usar su API gratis. -->
+  <span class="pie-tmdb">
+    Carátulas de <a href="https://www.themoviedb.org/" rel="noreferrer">TMDB</a>.
+    Imán usa su API, pero TMDB ni lo avala ni lo certifica.
+  </span>
+  {{end}}
 </footer>
 <script src="/estaticos/iman.js" defer></script>
 </body>

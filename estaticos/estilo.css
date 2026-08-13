@@ -191,7 +191,13 @@ code {
   color: var(--tenue);
   font-size: 0.82rem;
   border-top: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
+
+.pie-tmdb { font-size: 0.75rem; }
+.pie-tmdb a { color: var(--tenue); }
 
 /* — Novedades — */
 
@@ -285,6 +291,26 @@ code {
 
 /* Lo dudoso se ve dudoso: ni verde ni escondido. */
 .resultado--dudoso { border-left-color: var(--regular); }
+
+/* La carátula ocupa siempre lo mismo, haya imagen o no: las filas que TMDB no
+   reconoce tienen que quedar alineadas con las demás. */
+.cartel {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 81px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--fondo);
+}
+
+.cartel--sin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--borde);
+  color: var(--tenue);
+  font-size: 1.1rem;
+}
 
 .resultado-datos { flex: 1 1 20rem; min-width: 0; }
 
