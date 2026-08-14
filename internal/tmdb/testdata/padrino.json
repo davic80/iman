@@ -3,37 +3,66 @@
   "results": [
     {
       "adult": false,
-      "backdrop_path": "/mnbXAiRnEcCxxzOJXi5AbSHDMYr.jpg",
-      "genre_ids": [99],
-      "id": 1051032,
+      "backdrop_path": "/tSPT36ZKlP2WVHJLM4cQPLSzv3b.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 238,
+      "title": "El padrino",
       "original_language": "en",
-      "original_title": "The Godfather Legacy",
-      "overview": "Un repaso a la trilogía de Coppola con sus actores y su equipo.",
-      "popularity": 4.101,
-      "poster_path": "/lLmFVWmtHNsPjLdiJmVsQVBqSVe.jpg",
-      "release_date": "2012-06-03",
-      "title": "El padrino: el legado",
+      "original_title": "The Godfather",
+      "overview": "Don Vito Corleone, conocido dentro de los círculos del hampa como \"El Padrino\", es el patriarca de una de las cinco familias que ejercen el mando de la Cosa Nostra en Nueva York (Estados Unidos) durante la década de 1940. Don Corleone tiene cuatro hijos: una chica, Connie, y tres varones; Sonny, Michael y Fredo. Cuando Vito reclina intervenir en el negocio de estupefacientes, empieza una cruenta lucha de violentos episodios entre las distintas familias del crimen organizado.",
+      "popularity": 52.3782,
+      "poster_path": "/mBszHHr7tcDKR05Fa4IDa2bBvda.jpg",
+      "release_date": "1972-03-14",
+      "softcore": false,
       "video": false,
-      "vote_average": 6.9,
-      "vote_count": 41
+      "vote_average": 8.686,
+      "vote_count": 23338
     },
     {
       "adult": false,
-      "backdrop_path": "/8nEvwFTAxHvHFXsCyIiZDpxaFOU.jpg",
-      "genre_ids": [35],
-      "id": 47535,
-      "original_language": "es",
-      "original_title": "El último padrino",
-      "overview": "La vida de un capo retirado en un pueblo de la costa.",
-      "popularity": 2.008,
-      "poster_path": "/2QWNTfRPuNXHTGwUyDcMqQfaJgS.jpg",
-      "release_date": "2008-11-14",
-      "title": "El último padrino",
+      "backdrop_path": "/kGzFbGhp99zva6oZODW5atUtnqi.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 240,
+      "title": "El padrino II",
+      "original_language": "en",
+      "original_title": "The Godfather Part II",
+      "overview": "Continuación de la saga de los Corleone con dos historias paralelas: la elección de Michael Corleone como jefe de los negocios familiares y los orígenes del patriarca, el ya fallecido Don Vito, primero en Sicilia y luego en Estados Unidos, donde, empezando desde abajo, llegó a ser un poderosísimo jefe de la mafia de Nueva York.",
+      "popularity": 32.4868,
+      "poster_path": "/mbry0W5PRylSUHsYzdiY2FSJwze.jpg",
+      "release_date": "1974-12-20",
+      "softcore": false,
       "video": false,
-      "vote_average": 5.4,
-      "vote_count": 12
+      "vote_average": 8.571,
+      "vote_count": 14169
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/nIiSCZvxDeCeXrOJnpbmRB8FcKH.jpg",
+      "genre_ids": [
+        28,
+        80,
+        18
+      ],
+      "id": 79026,
+      "title": "El padrino",
+      "original_language": "en",
+      "original_title": "El padrino",
+      "overview": "En las calles del Este de Los Ángeles, Manny es un traficante de drogas formidable. Impresionado por su extravagante estilo de vida y sus proezas, su joven hijo, Kilo, anhela seguir sus pasos. Kilo se resuelve para aprender a prosperar en el mundo de las drogas, y comienza su nueva vida como comerciante. En un mundo donde un hombre quiere todo, puede terminar con nada.",
+      "popularity": 2.6633,
+      "poster_path": "/7Hl7Ys2INZ8NUq5wZMl8MbnVrzh.jpg",
+      "release_date": "2004-09-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.068,
+      "vote_count": 73
     }
   ],
   "total_pages": 1,
-  "total_results": 2
+  "total_results": 3
 }

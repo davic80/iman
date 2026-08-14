@@ -4,20 +4,68 @@
     {
       "adult": false,
       "backdrop_path": "/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
-      "first_air_date": "2008-01-20",
-      "genre_ids": [18],
+      "genre_ids": [
+        18,
+        80
+      ],
       "id": 1396,
-      "name": "Breaking Bad",
-      "origin_country": ["US"],
+      "origin_country": [
+        "US"
+      ],
       "original_language": "en",
       "original_name": "Breaking Bad",
-      "overview": "Walter White, un profesor de química con un cáncer terminal, se asocia con un antiguo alumno.",
-      "popularity": 384.796,
-      "poster_path": "/3xnWaLQjelJDDF7LT1WBo6f4BRe.jpg",
-      "vote_average": 8.9,
-      "vote_count": 13284
+      "overview": "Un profesor de química con cáncer terminal se asocia con un exalumno suyo para fabricar y vender metanfetamina a fin de que su familia no pase apuros económicos.",
+      "popularity": 150.2762,
+      "poster_path": "/anFx9aTOOYqgS3v7x3R84Kz67ly.jpg",
+      "first_air_date": "2008-01-20",
+      "softcore": false,
+      "name": "Breaking Bad",
+      "vote_average": 8.948,
+      "vote_count": 18380
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        35,
+        80,
+        18
+      ],
+      "id": 297997,
+      "origin_country": [
+        "US"
+      ],
+      "original_language": "en",
+      "original_name": "Breaking Bad: Original Minisodes",
+      "overview": "",
+      "popularity": 1.0129,
+      "poster_path": "/fFNbRUleJQ9GkCfJunU4yXuNbma.jpg",
+      "first_air_date": "2009-02-17",
+      "softcore": false,
+      "name": "Breaking Bad: Original Minisodes",
+      "vote_average": 6.0,
+      "vote_count": 1
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [],
+      "id": 326283,
+      "origin_country": [
+        "US"
+      ],
+      "original_language": "en",
+      "original_name": "Breaking the Deal with My Hockey Bad Boy",
+      "overview": "",
+      "popularity": 1.0762,
+      "poster_path": "/cjvq9nh9oVMC2ike0s6L9f72pZF.jpg",
+      "first_air_date": "2025-06-08",
+      "softcore": false,
+      "name": "Breaking the Deal with My Hockey Bad Boy",
+      "vote_average": 0.0,
+      "vote_count": 0
     }
   ],
   "total_pages": 1,
-  "total_results": 1
+  "total_results": 3
 }

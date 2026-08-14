@@ -45,7 +45,7 @@ func (s *Servidor) fichas(ctx context.Context, filas []buscador.Resultado) []tmd
 			hueco <- struct{}{}
 			defer func() { <-hueco }()
 
-			if f, hay := s.carteles.Buscar(ctx, fila.Info); hay {
+			if f, hay := s.carteles.Buscar(ctx, fila.Titulo, fila.Info); hay {
 				fichas[i] = f
 			}
 		}()

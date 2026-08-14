@@ -34,7 +34,7 @@ func TestVivoEncuentraUnaPelicula(t *testing.T) {
 	ctx, cancelar := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelar()
 
-	f, hay := c.Buscar(ctx, titulos.Analizar("Matrix 1999 1080p Castellano"))
+	f, hay := c.Buscar(ctx, "Matrix 1999 1080p Castellano", titulos.Analizar("Matrix 1999 1080p Castellano"))
 	if !hay {
 		t.Fatal("TMDB no reconoció Matrix: o la clave no vale o ha cambiado la respuesta")
 	}
@@ -55,11 +55,11 @@ func TestVivoElAñoDistingueLosRemakes(t *testing.T) {
 	ctx, cancelar := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelar()
 
-	vieja, hay := c.Buscar(ctx, titulos.Analizar("Dune 1984 DVDRip"))
+	vieja, hay := c.Buscar(ctx, "Dune 1984 DVDRip", titulos.Analizar("Dune 1984 DVDRip"))
 	if !hay {
 		t.Fatal("no encontró Dune del 84")
 	}
-	nueva, hay := c.Buscar(ctx, titulos.Analizar("Dune 2021 1080p"))
+	nueva, hay := c.Buscar(ctx, "Dune 2021 1080p", titulos.Analizar("Dune 2021 1080p"))
 	if !hay {
 		t.Fatal("no encontró Dune de 2021")
 	}
@@ -73,7 +73,7 @@ func TestVivoEncuentraUnaSerie(t *testing.T) {
 	ctx, cancelar := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelar()
 
-	f, hay := c.Buscar(ctx, titulos.Analizar("Breaking Bad 1x02 720p"))
+	f, hay := c.Buscar(ctx, "Breaking Bad 1x02 720p", titulos.Analizar("Breaking Bad 1x02 720p"))
 	if !hay {
 		t.Fatal("no encontró la serie")
 	}
@@ -87,7 +87,7 @@ func TestVivoTraeLaCaratula(t *testing.T) {
 	ctx, cancelar := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelar()
 
-	f, hay := c.Buscar(ctx, titulos.Analizar("Matrix 1999 1080p"))
+	f, hay := c.Buscar(ctx, "Matrix 1999 1080p", titulos.Analizar("Matrix 1999 1080p"))
 	if !hay {
 		t.Fatal("sin ficha no hay carátula que pedir")
 	}

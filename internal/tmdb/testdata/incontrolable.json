@@ -1,0 +1,65 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/4mKczHAW4XPDXGk7V5k7Ui3dgUk.jpg",
+      "genre_ids": [
+        18,
+        36
+      ],
+      "id": 1317149,
+      "title": "Incontrolable (I Swear)",
+      "original_language": "en",
+      "original_title": "I Swear",
+      "overview": "La historia real de John Davidson. Diagnosticado con Tourette a los 15 años, señalado como loco por sus compañeros, luchó con una condición que pocos habían presenciado. Ya adulto, hizo campaña en favor del síndrome de Tourette .",
+      "popularity": 19.305,
+      "poster_path": "/zcbGacD569vOB1iXthB7bVe2sW2.jpg",
+      "release_date": "2025-09-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.239,
+      "vote_count": 456
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/60QiRPM3oVNXiLM2LSoeqYm16gy.jpg",
+      "genre_ids": [
+        35
+      ],
+      "id": 13712,
+      "title": "Incontrôlable",
+      "original_language": "fr",
+      "original_title": "Incontrôlable",
+      "overview": "",
+      "popularity": 1.7744,
+      "poster_path": "/phHq95qfPMD3Qy0e6FQDBSzhzf5.jpg",
+      "release_date": "2006-02-08",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.022,
+      "vote_count": 161
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/nKSs7rgn8wNYIjja3fu5fz8UVCf.jpg",
+      "genre_ids": [
+        10402
+      ],
+      "id": 87097,
+      "title": "Ska-P - Incontrolable",
+      "original_language": "fr",
+      "original_title": "Ska-P - Incontrolable",
+      "overview": "",
+      "popularity": 0.4765,
+      "poster_path": "/4juMYyGfcFfw8IjLPZAmErVrNGK.jpg",
+      "release_date": "2003-12-08",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}

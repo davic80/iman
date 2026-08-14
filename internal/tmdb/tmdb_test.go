@@ -16,10 +16,14 @@ import (
 	"github.com/davic80/iman/internal/titulos"
 )
 
-// Los ficheros de testdata están escritos a mano con la forma que documenta
-// TMDB, no capturados de la API: para capturarlos hace falta una clave. Quien
-// comprueba que la forma real sigue siendo esta es el test de `tmdb_vivo_test.go`,
-// que sí sale a internet y solo corre con -tags vivo.
+// Los ficheros de testdata son respuestas de verdad de TMDB, capturadas el 13
+// de agosto de 2026 y recortadas a los tres primeros resultados. Los tests no
+// salen a la red: quien comprueba que TMDB sigue contestando así es
+// `tmdb_vivo_test.go`, que solo corre con -tags vivo y con clave.
+//
+// Cuatro de estas capturas son casos que aparecieron en la portada de verdad:
+// dos películas homónimas, un título que el clasificador corta por la mitad,
+// una coletilla entre paréntesis y una película que TMDB no tiene.
 
 func silencio() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -83,7 +87,7 @@ func (e *espia) ruta() string {
 func TestEncuentraLaPelicula(t *testing.T) {
 	c, e := sirve(t, "matrix.json")
 
-	f, hay := c.Buscar(context.Background(), titulos.Analizar("Matrix 1999 1080p Castellano"))
+	f, hay := c.Buscar(context.Background(), "Matrix 1999 1080p Castellano", titulos.Analizar("Matrix 1999 1080p Castellano"))
 	if !hay {
 		t.Fatal("no encontró Matrix")
 	}
@@ -109,7 +113,7 @@ func TestEncuentraLaPelicula(t *testing.T) {
 func TestElArticuloNoEstorba(t *testing.T) {
 	c, _ := sirve(t, "matrix.json")
 
-	if _, hay := c.Buscar(context.Background(), titulos.Analizar("The Matrix 1999")); !hay {
+	if _, hay := c.Buscar(context.Background(), "The Matrix 1999", titulos.Analizar("The Matrix 1999")); !hay {
 		t.Error("no reconoció The Matrix como Matrix")
 	}
 }
@@ -119,7 +123,7 @@ func TestElArticuloNoEstorba(t *testing.T) {
 func TestElAñoDecideEntreHomonimas(t *testing.T) {
 	c, _ := sirve(t, "dune.json")
 
-	f, hay := c.Buscar(context.Background(), titulos.Analizar("Dune 1984 DVDRip"))
+	f, hay := c.Buscar(context.Background(), "Dune 1984 DVDRip", titulos.Analizar("Dune 1984 DVDRip"))
 	if !hay {
 		t.Fatal("no encontró Dune")
 	}
@@ -133,26 +137,66 @@ func TestElAñoDecideEntreHomonimas(t *testing.T) {
 func TestSinAñoSeQuedaConLaMasConocida(t *testing.T) {
 	c, _ := sirve(t, "dune.json")
 
-	f, hay := c.Buscar(context.Background(), titulos.Analizar("Dune BluRay"))
+	f, hay := c.Buscar(context.Background(), "Dune BluRay", titulos.Analizar("Dune BluRay"))
 	if !hay || f.ID != 438631 {
 		t.Errorf("ficha = %+v, quiero la primera que devuelve TMDB", f)
 	}
 }
 
 // Preferir quedarse sin carátula: TMDB contesta algo a casi todo, y lo que
-// contesta muchas veces es otra película con palabras parecidas.
+// contesta muchas veces es otra película con palabras parecidas. Aquí devuelve
+// El padrino, El padrino II y otro El padrino de 2004; ninguno es el tercero.
 func TestNoSeQuedaConLoQueNoEs(t *testing.T) {
 	c, _ := sirve(t, "padrino.json")
 
-	if f, hay := c.Buscar(context.Background(), titulos.Analizar("El padrino 1972")); hay {
-		t.Errorf("aceptó %q como El padrino", f.Titulo)
+	if f, hay := c.Buscar(context.Background(), "El padrino III 1990", titulos.Analizar("El padrino III 1990")); hay {
+		t.Errorf("aceptó %q como El padrino III", f.Titulo)
+	}
+}
+
+// Y cuando TMDB no tiene nada, no tiene nada: la captura de "Amo del universo"
+// —una novedad real de un sitio— vuelve sin un solo resultado.
+func TestCuandoTMDBNoSabeNada(t *testing.T) {
+	c, _ := sirve(t, "amodeluniverso.json")
+
+	if _, hay := c.Buscar(context.Background(), "Amo del universo", titulos.Analizar("Amo del universo")); hay {
+		t.Error("se inventó una ficha con la lista vacía")
+	}
+}
+
+// El clasificador corta el título por las marcas de release, y "capítulo" es
+// una de ellas: "Una Milla: Capítulo Uno" se queda en "una milla", que es justo
+// como TMDB no la llama. Por eso se compara también con el título entero.
+func TestElTituloCortadoNoCuestaLaCaratula(t *testing.T) {
+	c, _ := sirve(t, "unamilla.json")
+
+	f, hay := c.Buscar(context.Background(), "Una Milla: Capítulo Uno", titulos.Analizar("Una Milla: Capítulo Uno"))
+	if !hay {
+		t.Fatal("no la reconoció")
+	}
+	if f.Titulo != "Una Milla: Capítulo Uno" {
+		t.Errorf("Titulo = %q, y el capítulo dos no es el uno", f.Titulo)
+	}
+}
+
+// TMDB desempata títulos repetidos con una coletilla entre paréntesis
+// ("Incontrolable (I Swear)") que el sitio no escribe.
+func TestElParentesisDeTMDBNoEstorba(t *testing.T) {
+	c, _ := sirve(t, "incontrolable.json")
+
+	f, hay := c.Buscar(context.Background(), "Incontrolable", titulos.Analizar("Incontrolable"))
+	if !hay {
+		t.Fatal("no reconoció Incontrolable")
+	}
+	if f.Titulo != "Incontrolable (I Swear)" {
+		t.Errorf("Titulo = %q", f.Titulo)
 	}
 }
 
 func TestLasSeriesSeBuscanEnSuSitio(t *testing.T) {
 	c, e := sirve(t, "serie.json")
 
-	f, hay := c.Buscar(context.Background(), titulos.Analizar("Breaking Bad S01E02 720p"))
+	f, hay := c.Buscar(context.Background(), "Breaking Bad S01E02 720p", titulos.Analizar("Breaking Bad S01E02 720p"))
 	if !hay {
 		t.Fatal("no encontró la serie")
 	}
@@ -169,7 +213,7 @@ func TestLasSeriesSeBuscanEnSuSitio(t *testing.T) {
 func TestElAñoDeUnCapituloNoTumbaLaSerie(t *testing.T) {
 	c, _ := sirve(t, "serie.json")
 
-	if _, hay := c.Buscar(context.Background(), titulos.Analizar("Breaking Bad 5x14 2012")); !hay {
+	if _, hay := c.Buscar(context.Background(), "Breaking Bad 5x14 2012", titulos.Analizar("Breaking Bad 5x14 2012")); !hay {
 		t.Error("el año del capítulo se cargó la ficha de la serie")
 	}
 }
@@ -184,7 +228,7 @@ func TestNoPreguntaDosVecesLoMismo(t *testing.T) {
 		grupo.Add(1)
 		go func() {
 			defer grupo.Done()
-			if _, hay := c.Buscar(context.Background(), titulos.Analizar("Matrix 1999 1080p")); !hay {
+			if _, hay := c.Buscar(context.Background(), "Matrix 1999 1080p", titulos.Analizar("Matrix 1999 1080p")); !hay {
 				t.Error("una de las diez se quedó sin ficha")
 			}
 		}()
@@ -217,10 +261,10 @@ func TestUnFalloNoSeGuardaComoRespuesta(t *testing.T) {
 	c := clienteContra(srv.URL, "token-de-prueba")
 	info := titulos.Analizar("Matrix 1999 1080p")
 
-	if _, hay := c.Buscar(context.Background(), info); hay {
+	if _, hay := c.Buscar(context.Background(), "Matrix 1999 1080p", info); hay {
 		t.Fatal("con TMDB caído no puede salir una ficha")
 	}
-	if _, hay := c.Buscar(context.Background(), info); !hay {
+	if _, hay := c.Buscar(context.Background(), "Matrix 1999 1080p", info); !hay {
 		t.Error("no volvió a intentarlo después del fallo")
 	}
 }
@@ -237,7 +281,7 @@ func TestSinClaveNoPregunta(t *testing.T) {
 	if c.Activo() {
 		t.Error("un cliente sin clave no está activo")
 	}
-	if _, hay := c.Buscar(context.Background(), titulos.Analizar("Matrix 1999")); hay {
+	if _, hay := c.Buscar(context.Background(), "Matrix 1999", titulos.Analizar("Matrix 1999")); hay {
 		t.Error("sin clave no puede haber ficha")
 	}
 	if n := veces.Load(); n != 0 {
@@ -252,7 +296,7 @@ func TestElClienteNiloNoRevienta(t *testing.T) {
 	if c.Activo() {
 		t.Error("nil no está activo")
 	}
-	if _, hay := c.Buscar(context.Background(), titulos.Analizar("Matrix 1999")); hay {
+	if _, hay := c.Buscar(context.Background(), "Matrix 1999", titulos.Analizar("Matrix 1999")); hay {
 		t.Error("nil no encuentra nada")
 	}
 }
@@ -273,7 +317,7 @@ func TestLasDosCredencialesValen(t *testing.T) {
 			c, e := sirve(t, "matrix.json")
 			c.token, c.v3 = caso.token, esClaveV3(caso.token)
 
-			c.Buscar(context.Background(), titulos.Analizar("Matrix 1999"))
+			c.Buscar(context.Background(), "Matrix 1999", titulos.Analizar("Matrix 1999"))
 
 			e.mu.Lock()
 			defer e.mu.Unlock()

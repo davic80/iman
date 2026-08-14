@@ -129,7 +129,10 @@ func esClaveV3(token string) bool { return reClaveV3.MatchString(strings.TrimSpa
 // Buscar devuelve la ficha de una obra, si TMDB la tiene y es sin duda la
 // misma. Nunca devuelve error: quedarse sin carátula no es un fallo de la
 // página, así que lo que sale mal se apunta en el log y aquí se dice que no.
-func (c *Cliente) Buscar(ctx context.Context, info titulos.Info) (Ficha, bool) {
+// El título entero del sitio va aparte de la obra porque el clasificador corta
+// por marcas de release y a veces se lleva parte del nombre: "Una Milla:
+// Capítulo Uno" queda en "una milla", que es justo como TMDB no la llama.
+func (c *Cliente) Buscar(ctx context.Context, titulo string, info titulos.Info) (Ficha, bool) {
 	if !c.Activo() || info.Obra == "" {
 		return Ficha{}, false
 	}
@@ -157,7 +160,8 @@ func (c *Cliente) Buscar(ctx context.Context, info titulos.Info) (Ficha, bool) {
 
 	candidatos, err := c.consultar(ctx, info.Obra, info.EsSerie())
 	if err == nil {
-		if elegido, vale := elegir(info.Obra, info.Año, info.EsSerie(), candidatos); vale {
+		buscado := nombres(info.Obra, titulo)
+		if elegido, vale := elegir(buscado, info.Año, info.EsSerie(), candidatos); vale {
 			e.ficha, e.hay = elegido.ficha(), true
 		}
 	}
@@ -279,13 +283,10 @@ func (c *Cliente) consultar(ctx context.Context, obra string, serie bool) ([]can
 // TMDB ordena por relevancia, pero su relevancia es la de un buscador: pedir
 // "el padrino" devuelve también documentales sobre El Padrino. Aquí solo pasa
 // lo que se llama igual, y el año decide entre los homónimos.
-func elegir(obra string, año int, serie bool, cs []candidato) (candidato, bool) {
-	obra = titulos.Normalizar(obra)
-	corta := titulos.SinArticulo(obra)
-
+func elegir(buscado []string, año int, serie bool, cs []candidato) (candidato, bool) {
 	var posibles []candidato
 	for _, c := range cs {
-		if !mismoTitulo(obra, corta, c) {
+		if !mismoTitulo(buscado, c) {
 			continue
 		}
 		// El año veta en las películas: dos películas del mismo título son dos
@@ -313,20 +314,44 @@ func elegir(obra string, año int, serie bool, cs []candidato) (candidato, bool)
 	return posibles[0], true
 }
 
-// mismoTitulo compara con el título castellano y con el original, y en las dos
-// formas con y sin artículo: los sitios escriben "Matrix" donde TMDB dice "The
-// Matrix", y "The Batman" donde TMDB dice "The Batman".
-func mismoTitulo(obra, corta string, c candidato) bool {
-	for _, t := range []string{c.Titulo, c.Original} {
-		if t == "" {
-			continue
-		}
-		n := titulos.Normalizar(t)
-		if n == obra || n == corta || titulos.SinArticulo(n) == obra || titulos.SinArticulo(n) == corta {
-			return true
+// mismoTitulo mira si alguna forma de escribir lo que se busca coincide con
+// alguna de escribir el candidato. Sigue siendo igualdad: lo que se amplía es
+// cómo se escribe lo mismo, no cuánto se parece.
+func mismoTitulo(buscado []string, c candidato) bool {
+	suyos := nombres(c.Titulo, c.Original)
+	for _, b := range buscado {
+		for _, s := range suyos {
+			if b == s {
+				return true
+			}
 		}
 	}
 	return false
+}
+
+// reParentesisFinal quita la coletilla entre paréntesis con la que TMDB
+// desempata títulos repetidos: "Incontrolable (I Swear)" es la misma película
+// que el sitio publica como "Incontrolable".
+var reParentesisFinal = regexp.MustCompile(`\s*\([^)]*\)\s*$`)
+
+// nombres devuelve las formas en que se puede escribir un título: tal cual, sin
+// el artículo inicial y sin el paréntesis final. Los sitios escriben "Matrix"
+// donde TMDB dice "The Matrix", y al revés.
+func nombres(ts ...string) []string {
+	var out []string
+	for _, t := range ts {
+		for _, v := range []string{t, reParentesisFinal.ReplaceAllString(t, "")} {
+			n := titulos.Normalizar(v)
+			if n == "" {
+				continue
+			}
+			out = append(out, n)
+			if corto := titulos.SinArticulo(n); corto != n {
+				out = append(out, corto)
+			}
+		}
+	}
+	return out
 }
 
 func distancia(a, b int) int {

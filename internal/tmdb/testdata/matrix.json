@@ -3,37 +3,69 @@
   "results": [
     {
       "adult": false,
-      "backdrop_path": "/ZG1fBs1Zq7cN0PQmnGGDTOTQBz.jpg",
-      "genre_ids": [28, 878],
+      "backdrop_path": "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg",
+      "genre_ids": [
+        28,
+        878
+      ],
       "id": 603,
+      "title": "Matrix",
       "original_language": "en",
       "original_title": "The Matrix",
-      "overview": "Thomas Anderson es un brillante programador de una respetable compañía de software, pero por las noches se convierte en Neo, un hacker.",
-      "popularity": 92.187,
-      "poster_path": "/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg",
+      "overview": "Thomas Anderson lleva una doble vida: por el día es programador en una importante empresa de software, y por la noche un hacker informático llamado Neo. Su vida no volverá a ser igual cuando unos misteriosos personajes le inviten a descubrir la respuesta a la pregunta que no le deja dormir: ¿qué es Matrix?",
+      "popularity": 45.5194,
+      "poster_path": "/tpW2X2DvxtTHJ61iJ7zNYYrJihs.jpg",
       "release_date": "1999-03-31",
-      "title": "Matrix",
+      "softcore": false,
       "video": false,
-      "vote_average": 8.216,
-      "vote_count": 26251
+      "vote_average": 8.255,
+      "vote_count": 28438
     },
     {
       "adult": false,
-      "backdrop_path": "/mpj9ns0LGWfRXqbeoPvUwbFCTCd.jpg",
-      "genre_ids": [28, 878],
+      "backdrop_path": "/ihOJcrorpDQtHTzIOrobbOhpJsj.jpg",
+      "genre_ids": [
+        12,
+        28,
+        53,
+        878
+      ],
       "id": 604,
+      "title": "Matrix Reloaded",
       "original_language": "en",
       "original_title": "The Matrix Reloaded",
-      "overview": "Neo, Trinity y Morfeo continúan la lucha contra las máquinas.",
-      "popularity": 45.117,
-      "poster_path": "/ivsF3Cv18Zt5Sq7lYuJKKrhOSFF.jpg",
+      "overview": "Las máquinas avanzan imparables hacia Zion en su afán por destruir a toda la humanidad y todas las naves se preparan para la dura batalla. Neo junto con Morfeo y Trinity buscan el camino del elegido dentro de Matrix para vencer a las máquinas y se encuentran con dificultades inesperadas: el agente Smith ha vuelto y no sólo eso, otros programas dentro de Matrix intentarán acabar con su misión. Mientras tanto Neo se tendrá que adaptar a la vida real y a la fama de ser el elegido.",
+      "popularity": 18.2606,
+      "poster_path": "/7IZk3Xp3HIpRJGXFYNvzmyRwDlt.jpg",
       "release_date": "2003-05-15",
-      "title": "Matrix Reloaded",
+      "softcore": false,
       "video": false,
-      "vote_average": 7.0,
-      "vote_count": 10152
+      "vote_average": 7.086,
+      "vote_count": 12177
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/533xAMhhVyjTy8hwMUFEt5TuDfR.jpg",
+      "genre_ids": [
+        12,
+        28,
+        53,
+        878
+      ],
+      "id": 605,
+      "title": "Matrix Revolutions",
+      "original_language": "en",
+      "original_title": "The Matrix Revolutions",
+      "overview": "Quedan veinte horas para la irrupción de las máquinas en Sión, el último bastión de los humanos libres. Mientras el cuerpo de Neo permanece en coma, su consciencia se encuentra en tierra de nadie, en un lugar entre el mundo humano y el de las máquinas.",
+      "popularity": 13.6894,
+      "poster_path": "/zi1UMF9jIM2JnQz0u2AyUw8QFZi.jpg",
+      "release_date": "2003-11-05",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.757,
+      "vote_count": 11006
     }
   ],
   "total_pages": 1,
-  "total_results": 2
+  "total_results": 3
 }

@@ -3,35 +3,44 @@
   "results": [
     {
       "adult": false,
-      "backdrop_path": "/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg",
-      "genre_ids": [878, 12],
+      "backdrop_path": "/h3HsfV8Kn9Sz2QWUYYdP5ya23hx.jpg",
+      "genre_ids": [
+        878,
+        12
+      ],
       "id": 438631,
+      "title": "Dune",
       "original_language": "en",
       "original_title": "Dune",
-      "overview": "Paul Atreides se traslada al planeta más peligroso del universo.",
-      "popularity": 128.882,
-      "poster_path": "/j4NrKxwPKAd6DL7A8YFrJZWnq0G.jpg",
+      "overview": "En un lejano futuro, la galaxia conocida es gobernada mediante un sistema feudal de casas nobles bajo el mandato del Emperador. Las alianzas y la política giran entorno a un pequeño planeta, Dune,  del que extrae la 'especia melange', la materia prima que permite los viajes espaciales. La Casa Atreides, bajo el mandato del Duque Leto Atreides recibe el encargo de custodiar el planeta, relevando en la encomienda a sus históricos enemigos, los Harkonnen. Paul Atreides, hijo del duque, se verá atrapado en las intrigas políticas mientras descubre el destino que le deparan los desiertos de Dune.",
+      "popularity": 36.2115,
+      "poster_path": "/szcew6yyjcDvaL0isaPBk2e3nkF.jpg",
       "release_date": "2021-09-15",
-      "title": "Dune",
+      "softcore": false,
       "video": false,
-      "vote_average": 7.8,
-      "vote_count": 11683
+      "vote_average": 7.783,
+      "vote_count": 15307
     },
     {
       "adult": false,
-      "backdrop_path": "/bLwDgWCqRPjZm0nJhZaGdaDGL0d.jpg",
-      "genre_ids": [878, 12],
+      "backdrop_path": "/5wJ2tckpvwcxGCAgZiccodwEJpf.jpg",
+      "genre_ids": [
+        28,
+        878,
+        12
+      ],
       "id": 841,
+      "title": "Dune",
       "original_language": "en",
       "original_title": "Dune",
-      "overview": "En el año 10191 la especia es la sustancia más valiosa del universo.",
-      "popularity": 28.44,
-      "poster_path": "/gjxFOQEQCAAlmwmUgqTTsHl1EWa.jpg",
+      "overview": "Por orden imperial la familia Atreides deberá hacerse cargo de la explotación del desértico planeta de Arrakis, conocido también como Dune, el único planeta donde se encuentra 'la especia', una potente droga que, además, es necesaria para los vuelos espaciales.",
+      "popularity": 14.4618,
+      "poster_path": "/sk4eTjGfp58RLRr67qzFUbX9EPl.jpg",
       "release_date": "1984-12-14",
-      "title": "Dune",
+      "softcore": false,
       "video": false,
-      "vote_average": 6.3,
-      "vote_count": 2148
+      "vote_average": 6.188,
+      "vote_count": 3495
     }
   ],
   "total_pages": 1,

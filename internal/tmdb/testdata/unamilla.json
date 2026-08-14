@@ -1,0 +1,66 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/jxQIjkJBTyZSxN3yyilpR0ns6HA.jpg",
+      "genre_ids": [
+        28,
+        80
+      ],
+      "id": 1327690,
+      "title": "Una Milla: Capítulo Dos",
+      "original_language": "en",
+      "original_title": "One Mile: Chapter Two",
+      "overview": "Un antiguo agente de las fuerzas especiales se ve obligado a regresar a una remota isla cuando la violenta y hermética comunidad contra la que luchó en el pasado secuestra a su hija en un acto de venganza. Lanzado a una caza implacable, se enfrenta a un enemigo que está preparado y anticipándose a todos sus movimientos.",
+      "popularity": 12.8227,
+      "poster_path": "/o8wSKL9hF1f4VRrGwnHQuxTBdef.jpg",
+      "release_date": "2026-02-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.643,
+      "vote_count": 91
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/xBORKTaQJTq3l7EdnTTnrZnYzYa.jpg",
+      "genre_ids": [
+        28,
+        80
+      ],
+      "id": 1327688,
+      "title": "Una Milla: Capítulo Uno",
+      "original_language": "en",
+      "original_title": "One Mile: Chapter One",
+      "overview": "Un ex agente de las fuerzas especiales intenta reencontrarse con su hija adolescente durante un viaje universitario por carretera. Cuando un desvío inesperado les pone en el punto de mira de una comunidad secreta y aislada, su hija es secuestrada y el viaje se convierte en una lucha de alto octanaje por la supervivencia. Solo y en inferioridad numérica, se ve obligado a utilizar todas sus habilidades para seguirles la pista, desmantelarlos y traer a su hija a casa.",
+      "popularity": 14.2423,
+      "poster_path": "/7GEKaYPz2lrpp3mS9EcmCBVsShn.jpg",
+      "release_date": "2026-02-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.88,
+      "vote_count": 121
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99
+      ],
+      "id": 768138,
+      "title": "Una milla de cruces sobre el pavimento",
+      "original_language": "es",
+      "original_title": "Una milla de cruces sobre el pavimento",
+      "overview": "",
+      "popularity": 0.5454,
+      "poster_path": "/lWD41Ox4rqwXzTZVck9H4OftLDu.jpg",
+      "release_date": "1979-11-24",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}
