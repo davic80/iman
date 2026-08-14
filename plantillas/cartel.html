@@ -1,9 +1,21 @@
 {{/* La carátula de una fila. Se pinta el hueco aunque no haya imagen: si no,
-     las filas que TMDB no reconoce se descolocan respecto a las demás. */}}
+     las filas que TMDB no reconoce se descolocan respecto a las demás.
+
+     Va dentro de un <button> y no de un <a> porque no lleva a ninguna parte:
+     abre el visor de esta misma página. Así se llega con el teclado y se activa
+     con Intro sin tener que inventar nada. Los datos del visor viajan en el
+     propio botón para no repetir setenta veces el mismo diálogo en el HTML. */}}
 {{define "cartel"}}
 {{- if .Cartel -}}
-<img class="cartel" src="{{.Cartel}}" width="54" height="81" loading="lazy" decoding="async"
-     alt="Carátula de {{.Obra}}"{{with .Sinopsis}} title="{{.}}"{{end}}>
+<button type="button" class="cartel-abrir" aria-label="Ampliar la carátula de {{.Obra}}"
+        data-grande="{{.CartelGrande}}" data-obra="{{.Obra}}"
+        data-titulo="{{.Obra}}{{with .Año}} ({{.}}){{end}}"
+        {{with .Generos}}data-generos="{{.}}"{{end}}
+        {{with .Nota}}data-nota="{{.}}"{{end}}
+        {{with .Sinopsis}}data-sinopsis="{{.}}"{{end}}>
+  <img class="cartel" src="{{.Cartel}}" width="54" height="81" loading="lazy" decoding="async"
+       alt="Carátula de {{.Obra}}">
+</button>
 {{- else -}}
 <span class="cartel cartel--sin" aria-hidden="true">🎬</span>
 {{- end -}}

@@ -13,6 +13,7 @@ package tmdb
 import (
 	"context"
 	"io"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -92,7 +93,7 @@ func TestVivoTraeLaCaratula(t *testing.T) {
 		t.Fatal("sin ficha no hay carátula que pedir")
 	}
 
-	cuerpo, tipo, err := c.Cartel(ctx, f.Cartel)
+	cuerpo, tipo, err := c.Cartel(ctx, TamañoCartel, f.Cartel)
 	if err != nil {
 		t.Fatalf("no se pudo traer la carátula: %v", err)
 	}
@@ -106,4 +107,62 @@ func TestVivoTraeLaCaratula(t *testing.T) {
 		t.Errorf("la carátula pesa %d bytes: eso no es una imagen", n)
 	}
 	t.Logf("carátula %s: %s, %d bytes", f.Cartel, tipo, n)
+}
+
+// Los géneros van escritos a mano en generos.go para no gastar una petición en
+// una tabla que no cambia. Este test es el precio de esa decisión: comprueba
+// contra la API de verdad que los números siguen significando lo mismo.
+//
+// Se comparan los números, no los nombres: en series TMDB deja media tabla en
+// inglés incluso pidiéndola en es-ES, y aquí se traducen a propósito.
+func TestVivoLosGenerosSiguenSiendoEstos(t *testing.T) {
+	c := clienteVivo(t)
+	ctx, cancelar := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelar()
+
+	for _, caso := range []struct {
+		que   string
+		ruta  string
+		tabla map[int]string
+	}{
+		{"cine", "/genre/movie/list", generosCine},
+		{"series", "/genre/tv/list", generosSeries},
+	} {
+		t.Run(caso.que, func(t *testing.T) {
+			suyos, err := listaDeGeneros(ctx, c, caso.ruta)
+			if err != nil {
+				t.Fatalf("no se pudo pedir la lista: %v", err)
+			}
+
+			for id, nombre := range suyos {
+				if _, hay := caso.tabla[id]; !hay {
+					t.Errorf("TMDB tiene un género que no está en la tabla: %d (%s)", id, nombre)
+				}
+			}
+			for id, nombre := range caso.tabla {
+				if _, hay := suyos[id]; !hay {
+					t.Errorf("la tabla tiene un género que TMDB ya no tiene: %d (%s)", id, nombre)
+				}
+			}
+			t.Logf("%d géneros de %s, todos en su sitio", len(suyos), caso.que)
+		})
+	}
+}
+
+func listaDeGeneros(ctx context.Context, c *Cliente, ruta string) (map[int]string, error) {
+	var lista struct {
+		Generos []struct {
+			ID     int    `json:"id"`
+			Nombre string `json:"name"`
+		} `json:"genres"`
+	}
+	if err := c.pedir(ctx, ruta, url.Values{"language": {"es-ES"}}, &lista); err != nil {
+		return nil, err
+	}
+
+	m := map[int]string{}
+	for _, g := range lista.Generos {
+		m[g.ID] = g.Nombre
+	}
+	return m, nil
 }

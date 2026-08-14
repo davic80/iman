@@ -20,7 +20,8 @@ import (
 // mira, no la respuesta entera, que trae veinte campos más.
 const unaPelicula = `{"results":[{"id":603,"title":"Matrix","original_title":"The Matrix",
 	"release_date":"1999-03-31","poster_path":"/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg",
-	"overview":"Un programador descubre que el mundo no es lo que parece."}]}`
+	"overview":"Un programador descubre que el mundo no es lo que parece.",
+	"genre_ids":[28,878],"vote_average":8.255,"vote_count":28438}]}`
 
 // tmdbFalso monta un TMDB que contesta lo que se le diga y cuenta las visitas.
 func tmdbFalso(t *testing.T, mano http.HandlerFunc) (*tmdb.Cliente, *atomic.Int32) {
@@ -70,7 +71,7 @@ func TestLaPortadaEnseñaLaCaratula(t *testing.T) {
 	h := servidorConCarteles(t, c, novedad("Falso", "Matrix 1999 1080p"))
 
 	cuerpo := pedir(t, h, "/novedades").Body.String()
-	if !strings.Contains(cuerpo, `src="/cartel/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"`) {
+	if !strings.Contains(cuerpo, `src="/cartel/w185/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"`) {
 		t.Errorf("no salió la carátula, salió %q", primeraLinea(cuerpo))
 	}
 	// La imagen se pide a Imán, nunca a image.tmdb.org: esta instancia es
@@ -98,7 +99,7 @@ func TestLaBusquedaEnseñaLaCaratula(t *testing.T) {
 	s.ConTMDB(c)
 
 	cuerpo := pedir(t, s.Handler(), "/buscar?q=matrix").Body.String()
-	if !strings.Contains(cuerpo, `src="/cartel/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"`) {
+	if !strings.Contains(cuerpo, `src="/cartel/w185/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"`) {
 		t.Errorf("no salió la carátula, salió %q", primeraLinea(cuerpo))
 	}
 }
@@ -148,7 +149,7 @@ func TestElCartelLoSirveIman(t *testing.T) {
 	c, _ := tmdbFalso(t, sirveFicha)
 	h := servidorConCarteles(t, c)
 
-	rec := pedir(t, h, "/cartel/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg")
+	rec := pedir(t, h, "/cartel/w185/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("código = %d, quiero 200", rec.Code)
 	}
@@ -166,7 +167,7 @@ func TestElCartelNoEsUnProxyAbierto(t *testing.T) {
 	c, veces := tmdbFalso(t, sirveFicha)
 	h := servidorConCarteles(t, c)
 
-	for _, mala := range []string{"/cartel/..%2f..%2fetc%2fpasswd", "/cartel/robo.php", "/cartel/x.jpg"} {
+	for _, mala := range []string{"/cartel/w185/..%2f..%2fetc%2fpasswd", "/cartel/w185/robo.php", "/cartel/w185/x.jpg"} {
 		if rec := pedir(t, h, mala); rec.Code == http.StatusOK {
 			t.Errorf("%s devolvió 200", mala)
 		}
@@ -181,7 +182,79 @@ func TestElCartelNoEsUnProxyAbierto(t *testing.T) {
 func TestElCartelSinClaveContesta404(t *testing.T) {
 	h, _ := servidorConPortada(t)
 
-	if rec := pedir(t, h, "/cartel/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"); rec.Code != http.StatusNotFound {
+	if rec := pedir(t, h, "/cartel/w185/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"); rec.Code != http.StatusNotFound {
 		t.Errorf("código = %d, quiero 404", rec.Code)
+	}
+}
+
+// El género y la nota salen en la fila. Es lo que TMDB sabe de la obra, y va
+// junto a las etiquetas que dice el sitio.
+func TestLaFilaEnseñaGeneroYPuntuacion(t *testing.T) {
+	c, _ := tmdbFalso(t, sirveFicha)
+	h := servidorConCarteles(t, c, novedad("Falso", "Matrix 1999 1080p"))
+
+	cuerpo := pedir(t, h, "/novedades").Body.String()
+	for _, quiero := range []string{"Acción · Ciencia ficción", "★ 8,3"} {
+		if !strings.Contains(cuerpo, quiero) {
+			t.Errorf("falta %q en la fila", quiero)
+		}
+	}
+	// Con coma, que es como se escriben los decimales en castellano.
+	if strings.Contains(cuerpo, "8.3") {
+		t.Error("la nota salió con punto")
+	}
+}
+
+// La carátula se puede ampliar: es un botón con lo que necesita el visor, y la
+// imagen grande no se descarga hasta que se pincha.
+func TestLaCaratulaSeAmplia(t *testing.T) {
+	c, _ := tmdbFalso(t, sirveFicha)
+	h := servidorConCarteles(t, c, novedad("Falso", "Matrix 1999 1080p"))
+
+	cuerpo := pedir(t, h, "/novedades").Body.String()
+	if !strings.Contains(cuerpo, `class="cartel-abrir"`) {
+		t.Error("la carátula no es pinchable")
+	}
+	if !strings.Contains(cuerpo, `data-grande="/cartel/w500/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"`) {
+		t.Error("el botón no lleva la carátula grande")
+	}
+	// La grande solo aparece como dato del botón, nunca como src: si estuviera
+	// en un <img> el navegador se bajaría setenta imágenes de golpe.
+	if strings.Contains(cuerpo, `src="/cartel/w500/`) {
+		t.Error("la lista se está descargando las carátulas grandes")
+	}
+	if !strings.Contains(cuerpo, `id="visor"`) {
+		t.Error("falta el visor en la página")
+	}
+}
+
+// Sin TMDB no hay visor que enseñar, así que tampoco se pinta.
+func TestSinClaveNoHayVisor(t *testing.T) {
+	h, _ := servidorConPortada(t, novedad("Falso", "Matrix 1999 1080p"))
+
+	if cuerpo := pedir(t, h, "/novedades").Body.String(); strings.Contains(cuerpo, "visor") {
+		t.Error("sin TMDB no debería haber visor")
+	}
+}
+
+// El tamaño también llega desde el navegador, así que también hay que mirarlo:
+// si no, /cartel/original sería una forma de hacer que este servidor se
+// descargue las imágenes más gordas de TMDB una y otra vez.
+func TestElCartelNoSirveCualquierTamaño(t *testing.T) {
+	c, veces := tmdbFalso(t, sirveFicha)
+	h := servidorConCarteles(t, c)
+
+	fichero := "dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"
+	for _, malo := range []string{"original", "w1280", "h632"} {
+		if rec := pedir(t, h, "/cartel/"+malo+"/"+fichero); rec.Code == http.StatusOK {
+			t.Errorf("/cartel/%s devolvió 200", malo)
+		}
+	}
+	if n := veces.Load(); n != 0 {
+		t.Errorf("salió a la red %d veces con tamaños malos, quiero 0", n)
+	}
+
+	if rec := pedir(t, h, "/cartel/w500/"+fichero); rec.Code != http.StatusOK {
+		t.Errorf("el tamaño grande sí se sirve: código = %d", rec.Code)
 	}
 }

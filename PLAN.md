@@ -362,10 +362,16 @@ Siete piezas:
    > capítulo y no el del estreno.
    >
    > Dos decisiones más que salieron por el camino: las imágenes las sirve Imán
-   > desde `/cartel`, por lo mismo que el `.torrent` (una página privada que
-   > carga imágenes de fuera deja de serlo un poco), y todo esto es opcional de
-   > verdad: sin `IMAN_TMDB` no se hace ni una petición y las páginas se pintan
-   > como antes de que TMDB existiera.
+   > desde `/cartel/{tamaño}/{fichero}` —con lista blanca de tamaños, por lo
+   > mismo que el `.torrent`: una página privada que carga imágenes de fuera
+   > deja de serlo un poco—, y todo esto es opcional de verdad: sin `IMAN_TMDB`
+   > no se hace ni una petición y las páginas se pintan como antes de que TMDB
+   > existiera.
+   >
+   > Después se le añadieron el género, la puntuación y el visor: los dos
+   > primeros ya venían en la respuesta de la búsqueda, así que no costaron
+   > ninguna petición nueva, y el visor es un único `<dialog>` que se rellena
+   > con lo que trae el botón pinchado.
 7. **UI** — plantillas Go + htmx
 
 ---

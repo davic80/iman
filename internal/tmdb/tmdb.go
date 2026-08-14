@@ -36,9 +36,19 @@ const (
 	ImagenesPorDefecto = "https://image.tmdb.org/t/p"
 )
 
-// TamañoCartel es el ancho que se pide de la carátula. En la lista se enseña
-// pequeña, así que pedir el original sería tirar megas a la basura.
-const TamañoCartel = "w185"
+// TamañoCartel es el ancho que se pide para la lista y TamañoGrande el del
+// visor. En la lista se enseña pequeña, así que pedir el original sería tirar
+// megas a la basura; al ampliarla ya compensa.
+//
+// Son los dos únicos que Imán sirve. TMDB acepta más, pero cada uno que se
+// admita es un tamaño que un tercero puede hacer que este servidor descargue.
+const (
+	TamañoCartel = "w185"
+	TamañoGrande = "w500"
+)
+
+// tamaños es la lista blanca del proxy de imágenes.
+var tamaños = map[string]bool{TamañoCartel: true, TamañoGrande: true}
 
 // maxCache es cuántas fichas se recuerdan a la vez. Es un tope de memoria, no
 // una caducidad: una película no cambia de cartel, y el proceso se reinicia en
@@ -49,6 +59,11 @@ const maxCache = 5000
 // de resultados de TMDB no llega a 100 KB.
 const maxCuerpo = 1 << 20
 
+// minVotos es cuántos votos hace falta para enseñar la puntuación. Una obra
+// con tres votos puede lucir un 10 que no significa nada, y una nota inventada
+// engaña más que la falta de nota.
+const minVotos = 10
+
 // Ficha es lo que TMDB sabe de una obra.
 type Ficha struct {
 	ID       int
@@ -56,6 +71,9 @@ type Ficha struct {
 	Año      int
 	Cartel   string // Ruta dentro de TMDB, tipo "/abc.jpg". Vacía si no tiene
 	Sinopsis string
+	Generos  []string // En castellano y en el orden que los da TMDB
+	Nota     float64  // Sobre 10. Cero si no hay votos suficientes
+	Votos    int
 }
 
 // Cliente habla con TMDB y recuerda lo que ya ha preguntado.
@@ -190,27 +208,43 @@ type candidato struct {
 	Año      int
 	Cartel   string
 	Sinopsis string
+	Generos  []string
+	Nota     float64
+	Votos    int
 }
 
 func (c candidato) ficha() Ficha {
-	return Ficha{ID: c.ID, Titulo: c.Titulo, Año: c.Año, Cartel: c.Cartel, Sinopsis: c.Sinopsis}
+	f := Ficha{
+		ID: c.ID, Titulo: c.Titulo, Año: c.Año, Cartel: c.Cartel,
+		Sinopsis: c.Sinopsis, Generos: c.Generos, Votos: c.Votos,
+	}
+	if c.Votos >= minVotos {
+		f.Nota = c.Nota
+	}
+	return f
 }
 
 // crudo es un resultado tal cual lo escribe TMDB. Las películas y las series
 // usan nombres de campo distintos para lo mismo, así que caben los dos juegos.
 type crudo struct {
-	ID             int    `json:"id"`
-	Titulo         string `json:"title"`
-	TituloOriginal string `json:"original_title"`
-	Nombre         string `json:"name"`
-	NombreOriginal string `json:"original_name"`
-	Estreno        string `json:"release_date"`
-	Emision        string `json:"first_air_date"`
-	Cartel         string `json:"poster_path"`
-	Sinopsis       string `json:"overview"`
+	ID             int     `json:"id"`
+	Titulo         string  `json:"title"`
+	TituloOriginal string  `json:"original_title"`
+	Nombre         string  `json:"name"`
+	NombreOriginal string  `json:"original_name"`
+	Estreno        string  `json:"release_date"`
+	Emision        string  `json:"first_air_date"`
+	Cartel         string  `json:"poster_path"`
+	Sinopsis       string  `json:"overview"`
+	Generos        []int   `json:"genre_ids"`
+	Nota           float64 `json:"vote_average"`
+	Votos          int     `json:"vote_count"`
 }
 
-func (c crudo) candidato() candidato {
+// candidato traduce el resultado crudo. Hace falta saber si se preguntó por una
+// serie porque los números de género de TMDB son dos tablas distintas: el 10759
+// solo existe en series y el 28 solo en cine.
+func (c crudo) candidato(serie bool) candidato {
 	titulo, original, fecha := c.Titulo, c.TituloOriginal, c.Estreno
 	if titulo == "" {
 		titulo, original, fecha = c.Nombre, c.NombreOriginal, c.Emision
@@ -222,6 +256,7 @@ func (c crudo) candidato() candidato {
 	return candidato{
 		ID: c.ID, Titulo: titulo, Original: original, Año: año,
 		Cartel: c.Cartel, Sinopsis: c.Sinopsis,
+		Generos: generos(c.Generos, serie), Nota: c.Nota, Votos: c.Votos,
 	}
 }
 
@@ -238,13 +273,33 @@ func (c *Cliente) consultar(ctx context.Context, obra string, serie bool) ([]can
 		"language":      {"es-ES"},
 		"include_adult": {"false"},
 	}
+
+	var cuerpo struct {
+		Resultados []crudo `json:"results"`
+	}
+	if err := c.pedir(ctx, ruta, q, &cuerpo); err != nil {
+		return nil, err
+	}
+
+	cs := make([]candidato, 0, len(cuerpo.Resultados))
+	for _, r := range cuerpo.Resultados {
+		cs = append(cs, r.candidato(serie))
+	}
+	return cs, nil
+}
+
+// pedir hace una llamada a la API y descarga la respuesta en destino. Las dos
+// credenciales de TMDB viajan en sitios distintos —la vieja en la URL, el token
+// nuevo en la cabecera—, y ese es el único motivo por el que esto no es un
+// http.Get de una línea.
+func (c *Cliente) pedir(ctx context.Context, ruta string, q url.Values, destino any) error {
 	if c.v3 {
 		q.Set("api_key", c.token)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.api+ruta+"?"+q.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("Accept", "application/json")
 	if !c.v3 {
@@ -253,29 +308,21 @@ func (c *Cliente) consultar(ctx context.Context, obra string, serie bool) ([]can
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("TMDB no acepta la clave (401): revisa IMAN_TMDB")
+			return fmt.Errorf("TMDB no acepta la clave (401): revisa IMAN_TMDB")
 		}
-		return nil, fmt.Errorf("TMDB devolvió %d", resp.StatusCode)
+		return fmt.Errorf("TMDB devolvió %d", resp.StatusCode)
 	}
 
-	var cuerpo struct {
-		Resultados []crudo `json:"results"`
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxCuerpo)).Decode(destino); err != nil {
+		return fmt.Errorf("respuesta ilegible de TMDB: %w", err)
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, maxCuerpo)).Decode(&cuerpo); err != nil {
-		return nil, fmt.Errorf("respuesta ilegible de TMDB: %w", err)
-	}
-
-	cs := make([]candidato, 0, len(cuerpo.Resultados))
-	for _, r := range cuerpo.Resultados {
-		cs = append(cs, r.candidato())
-	}
-	return cs, nil
+	return nil
 }
 
 // elegir se queda con el candidato que es la obra buscada, o con ninguno.
@@ -376,15 +423,18 @@ var reCartel = regexp.MustCompile(`^/[A-Za-z0-9_-]{8,64}\.(jpg|png)$`)
 // .torrent: quien mira la portada no tiene por qué aparecer en los registros de
 // nadie más, y una página privada que va cargando imágenes de fuera deja de
 // serlo un poco.
-func (c *Cliente) Cartel(ctx context.Context, ruta string) (io.ReadCloser, string, error) {
+func (c *Cliente) Cartel(ctx context.Context, tamaño, ruta string) (io.ReadCloser, string, error) {
 	if !c.Activo() {
 		return nil, "", fmt.Errorf("TMDB no está configurado")
+	}
+	if !tamaños[tamaño] {
+		return nil, "", fmt.Errorf("ese tamaño de carátula no se sirve")
 	}
 	if !reCartel.MatchString(ruta) {
 		return nil, "", fmt.Errorf("esa no es una ruta de carátula")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.imagenes+"/"+TamañoCartel+ruta, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.imagenes+"/"+tamaño+ruta, nil)
 	if err != nil {
 		return nil, "", err
 	}

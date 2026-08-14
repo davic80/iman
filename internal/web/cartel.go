@@ -61,11 +61,11 @@ func (s *Servidor) fichas(ctx context.Context, filas []buscador.Resultado) []tmd
 // instancia es privada, y una página privada que va cargando imágenes de fuera
 // le cuenta a un tercero qué se está mirando.
 func (s *Servidor) cartel(w http.ResponseWriter, r *http.Request) {
-	fichero := r.PathValue("fichero")
+	tamaño, fichero := r.PathValue("tamaño"), r.PathValue("fichero")
 
-	cuerpo, tipo, err := s.carteles.Cartel(r.Context(), "/"+fichero)
+	cuerpo, tipo, err := s.carteles.Cartel(r.Context(), tamaño, "/"+fichero)
 	if err != nil {
-		s.log.Warn("no se pudo traer una carátula", "fichero", fichero, "error", err)
+		s.log.Warn("no se pudo traer una carátula", "tamaño", tamaño, "fichero", fichero, "error", err)
 		http.NotFound(w, r)
 		return
 	}

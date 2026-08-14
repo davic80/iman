@@ -303,6 +303,20 @@ code {
   background: var(--fondo);
 }
 
+/* El botón no se ve: lo que se ve es la carátula que lleva dentro. */
+.cartel-abrir {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: zoom-in;
+  border-radius: 4px;
+}
+
+.cartel-abrir:hover .cartel { filter: brightness(1.15); }
+.cartel-abrir:focus-visible { outline: 2px solid var(--iman); outline-offset: 2px; }
+
 .cartel--sin {
   display: flex;
   align-items: center;
@@ -340,6 +354,15 @@ code {
 .etiqueta--idioma {
   color: var(--bien);
   border-color: var(--bien);
+}
+
+/* Género y nota vienen de TMDB, no del sitio: van en cursiva y en dorado para
+   que se note de un vistazo que no las dice quien publica el torrent. */
+.etiqueta--genero { font-style: italic; }
+.etiqueta--nota {
+  color: var(--regular);
+  border-color: var(--regular);
+  font-variant-numeric: tabular-nums;
 }
 
 .etiqueta--duda {
@@ -448,3 +471,54 @@ code {
 .filtro-cuantos { color: var(--tenue); font-variant-numeric: tabular-nums; }
 
 .filtro--quitar { border-style: dashed; }
+
+/* — Visor de carátulas — */
+
+.visor {
+  position: relative; /* para que la × se coloque respecto al diálogo */
+  max-width: min(46rem, 92vw);
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-alto);
+  color: var(--texto);
+}
+
+.visor::backdrop { background: rgb(0 0 0 / 0.72); }
+
+.visor-cartel {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+  border-radius: var(--radio) 0 0 var(--radio);
+  background: var(--fondo);
+}
+
+/* En pantalla ancha, carátula a la izquierda y datos a la derecha; en el móvil,
+   una encima de otra. */
+@media (min-width: 34rem) {
+  .visor { display: grid; grid-template-columns: 20rem 1fr; }
+  .visor-cartel { grid-row: 1; }
+}
+
+.visor-datos { padding: 1.25rem 1.5rem; min-width: 0; }
+.visor-titulo { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.visor-meta { margin: 0 0 0.75rem; color: var(--regular); font-size: 0.85rem; }
+.visor-sinopsis { margin: 0; color: var(--tenue); font-size: 0.9rem; }
+.visor-sinopsis:empty { display: none; }
+
+.visor-cerrar {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.6rem;
+  padding: 0 0.35rem;
+  border: 0;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.45);
+  color: var(--texto);
+  font-size: 1.4rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.visor-cerrar:hover { background: var(--iman); }

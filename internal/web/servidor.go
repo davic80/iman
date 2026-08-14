@@ -120,7 +120,7 @@ func (s *Servidor) Handler() http.Handler {
 	// carátulas van por lo mismo.
 	mux.HandleFunc("GET /magnet", s.magnet)
 	mux.HandleFunc("GET /torrent", s.torrent)
-	mux.HandleFunc("GET /cartel/{fichero}", s.cartel)
+	mux.HandleFunc("GET /cartel/{tamaño}/{fichero}", s.cartel)
 
 	// Sonda para el HEALTHCHECK del contenedor: texto plano, sin plantillas,
 	// sin tocar nada externo. Solo responde si el proceso esta en pie.

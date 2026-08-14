@@ -25,6 +25,23 @@
 {{block "contenido" .}}{{end}}
 </main>
 
+{{if .TMDB}}
+<!-- El visor de carátulas. Uno solo para toda la página: lo rellena el JS con
+     lo que trae el botón que se ha pinchado. Sale vacío y sin ocupar sitio, y
+     si no hay JavaScript no se abre nunca y no estorba a nadie. -->
+<dialog id="visor" class="visor">
+  <form method="dialog">
+    <button class="visor-cerrar" aria-label="Cerrar">×</button>
+  </form>
+  <img class="visor-cartel" alt="">
+  <div class="visor-datos">
+    <h2 class="visor-titulo"></h2>
+    <p class="visor-meta"></p>
+    <p class="visor-sinopsis"></p>
+  </div>
+</dialog>
+{{end}}
+
 <footer class="pie">
   <span>Imán · {{.Version}}</span>
   {{if .TMDB}}

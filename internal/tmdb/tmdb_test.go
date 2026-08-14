@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -350,7 +351,7 @@ func TestElCartelSoloSirveRutasDeTMDB(t *testing.T) {
 		"",
 	}
 	for _, mala := range malas {
-		if _, _, err := c.Cartel(context.Background(), mala); err == nil {
+		if _, _, err := c.Cartel(context.Background(), TamañoCartel, mala); err == nil {
 			t.Errorf("aceptó %q como carátula", mala)
 		}
 	}
@@ -366,7 +367,7 @@ func TestElCartelSoloSirveRutasDeTMDB(t *testing.T) {
 		"/3xnWaLQjelJDDF7LT1WBo6f4BRe.png",
 	}
 	for _, buena := range buenas {
-		cuerpo, tipo, err := c.Cartel(context.Background(), buena)
+		cuerpo, tipo, err := c.Cartel(context.Background(), TamañoCartel, buena)
 		if err != nil {
 			t.Fatalf("no trajo %q: %v", buena, err)
 		}
@@ -387,7 +388,110 @@ func TestElCartelNoSirveLoQueNoEsImagen(t *testing.T) {
 	defer srv.Close()
 
 	c := clienteContra(srv.URL, "token-de-prueba")
-	if _, _, err := c.Cartel(context.Background(), "/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"); err == nil {
+	if _, _, err := c.Cartel(context.Background(), TamañoCartel, "/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"); err == nil {
 		t.Error("coló una página HTML como carátula")
+	}
+}
+
+// El género llega como número y tiene que salir como palabra en castellano.
+func TestElGeneroSaleEnCastellano(t *testing.T) {
+	c, _ := sirve(t, "matrix.json")
+
+	f, _ := c.Buscar(context.Background(), "Matrix 1999 1080p", titulos.Analizar("Matrix 1999 1080p"))
+	quiero := []string{"Acción", "Ciencia ficción"}
+	if !reflect.DeepEqual(f.Generos, quiero) {
+		t.Errorf("Generos = %q, quiero %q", f.Generos, quiero)
+	}
+}
+
+// Cine y series numeran los géneros en tablas distintas, así que el mismo
+// número significa cosas distintas. El 18 es Drama en las dos, pero el 80 de
+// una serie hay que leerlo en la tabla de series o se traduce cualquier cosa.
+func TestLosGenerosDeSerieSalenDeSuTabla(t *testing.T) {
+	c, _ := sirve(t, "serie.json")
+
+	f, _ := c.Buscar(context.Background(), "Breaking Bad S01E02", titulos.Analizar("Breaking Bad S01E02"))
+	quiero := []string{"Drama", "Crimen"}
+	if !reflect.DeepEqual(f.Generos, quiero) {
+		t.Errorf("Generos = %q, quiero %q", f.Generos, quiero)
+	}
+
+	// El 10759 no existe en cine y el 28 no existe en series: si se leyeran en
+	// la tabla equivocada saldrían géneros inventados o ninguno.
+	if g := generos([]int{10759}, true); len(g) != 1 || g[0] != "Acción y aventura" {
+		t.Errorf("el 10759 de series = %q", g)
+	}
+	if g := generos([]int{10759}, false); len(g) != 0 {
+		t.Errorf("el 10759 no es un género de cine, y salió %q", g)
+	}
+}
+
+// Un número que no esté en la tabla se calla. Si TMDB inventa un género nuevo,
+// lo peor que puede pasar es que falte, nunca que salga un "10771" en la fila.
+func TestUnGeneroDesconocidoNoSeEnseña(t *testing.T) {
+	if g := generos([]int{28, 99999, 878}, false); !reflect.DeepEqual(g, []string{"Acción", "Ciencia ficción"}) {
+		t.Errorf("generos = %q", g)
+	}
+}
+
+// La puntuación es la de TMDB, tal cual.
+func TestLaPuntuacionEsLaDeTMDB(t *testing.T) {
+	c, _ := sirve(t, "matrix.json")
+
+	f, _ := c.Buscar(context.Background(), "Matrix 1999 1080p", titulos.Analizar("Matrix 1999 1080p"))
+	if f.Nota != 8.255 {
+		t.Errorf("Nota = %v, quiero 8.255", f.Nota)
+	}
+	if f.Votos != 28438 {
+		t.Errorf("Votos = %d", f.Votos)
+	}
+}
+
+// Cuatro votos no son una puntuación. Un documental que nadie ha visto puede
+// lucir un 10 que no significa nada, así que por debajo del mínimo no se
+// enseña nota —pero la ficha y la carátula siguen valiendo.
+func TestUnaNotaDeCuatroVotosNoSeEnseña(t *testing.T) {
+	c, _ := sirve(t, "unamilla.json")
+
+	titulo := "Una milla de cruces sobre el pavimento"
+	f, hay := c.Buscar(context.Background(), titulo, titulos.Analizar(titulo))
+	if !hay {
+		t.Fatal("no encontró la película")
+	}
+	if f.Votos != 0 {
+		t.Fatalf("esta captura tenía 0 votos y ahora tiene %d", f.Votos)
+	}
+	if f.Nota != 0 {
+		t.Errorf("Nota = %v con %d votos, quiero que se calle", f.Nota, f.Votos)
+	}
+	if f.Cartel == "" {
+		t.Error("quedarse sin nota no puede costar la carátula")
+	}
+}
+
+// El proxy solo sirve los dos tamaños que Imán usa. Si aceptara cualquiera,
+// bastaría con pedir "original" en bucle para que este servidor se dedicara a
+// descargar imágenes gordas de TMDB por cuenta de un tercero.
+func TestElCartelSoloSirveLosTamañosDeCasa(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte{0xff, 0xd8, 0xff})
+	}))
+	defer srv.Close()
+
+	c := clienteContra(srv.URL, "token-de-prueba")
+	ruta := "/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"
+
+	for _, malo := range []string{"original", "w1280", "", "../original", "w185/../original"} {
+		if _, _, err := c.Cartel(context.Background(), malo, ruta); err == nil {
+			t.Errorf("aceptó el tamaño %q", malo)
+		}
+	}
+	for _, bueno := range []string{TamañoCartel, TamañoGrande} {
+		cuerpo, _, err := c.Cartel(context.Background(), bueno, ruta)
+		if err != nil {
+			t.Fatalf("no sirvió el tamaño %q: %v", bueno, err)
+		}
+		cuerpo.Close()
 	}
 }

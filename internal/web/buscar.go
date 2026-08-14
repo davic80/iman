@@ -46,9 +46,12 @@ type vistaResultado struct {
 
 	// Lo que ha puesto TMDB, si ha reconocido la película. Vacío es lo normal:
 	// sin clave, sin acierto seguro o sin tiempo, la fila se pinta igual.
-	Cartel   string // URL de la carátula, servida por Imán
-	Obra     string // El título oficial en castellano, para el alt de la imagen
-	Sinopsis string
+	Cartel       string // URL de la carátula, servida por Imán
+	CartelGrande string // La misma, en grande, para cuando se pincha
+	Obra         string // El título oficial en castellano, para el alt de la imagen
+	Sinopsis     string
+	Generos      string // Ya juntos: "Ciencia ficción · Acción"
+	Nota         string // Sobre 10 y con coma: "8,3". Vacío si TMDB no tiene votos
 }
 
 // vistaOtroSitio es un sitio que publica el mismo torrent que la fila. Va con
@@ -125,11 +128,36 @@ func vista(r buscador.Resultado, f tmdb.Ficha) vistaResultado {
 	// El título que se enseña sigue siendo el del sitio: es el que identifica a
 	// esta copia y no a la película. De TMDB se coge la cara, no el nombre.
 	if f.Cartel != "" {
-		v.Cartel = "/cartel" + f.Cartel
+		v.Cartel = "/cartel/" + tmdb.TamañoCartel + f.Cartel
+		v.CartelGrande = "/cartel/" + tmdb.TamañoGrande + f.Cartel
 		v.Obra = f.Titulo
 		v.Sinopsis = f.Sinopsis
 	}
+	// El género y la nota no dependen de que haya carátula: si TMDB ha
+	// reconocido la obra, lo que sabe de ella vale igual.
+	v.Generos = generos(f.Generos)
+	v.Nota = nota(f.Nota)
 	return v
+}
+
+// maxGeneros son los géneros que caben en la fila sin comerse la línea de
+// etiquetas. TMDB suele dar dos o tres, y el tercero casi nunca añade nada.
+const maxGeneros = 2
+
+func generos(gs []string) string {
+	if len(gs) > maxGeneros {
+		gs = gs[:maxGeneros]
+	}
+	return strings.Join(gs, " · ")
+}
+
+// nota deja la puntuación en una cifra decimal y con coma, que es como se
+// escriben los decimales en castellano.
+func nota(n float64) string {
+	if n <= 0 {
+		return ""
+	}
+	return strings.Replace(strconv.FormatFloat(n, 'f', 1, 64), ".", ",", 1)
 }
 
 // enlaceA arma la URL de descarga. El navegador solo manda el sitio y la ficha;

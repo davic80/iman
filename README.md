@@ -107,9 +107,22 @@ sin artículo, y el año decide entre homónimas: dos películas con el mismo t�
 son un remake, y ponerle a una el cartel de la otra es mentir. En las series el
 año no veta, porque el que trae el título de un capítulo es el del capítulo.
 
+De la misma respuesta salen el género y la puntuación, que van en la fila como
+dos etiquetas más. La nota se calla por debajo de diez votos: un documental que
+ha visto una persona puede lucir un 10 que no significa nada. Los géneros están
+escritos en `generos.go` en vez de pedirse, que son veinte filas que no cambian
+—y un test vivo avisa el día que TMDB los mueva.
+
+Al pinchar una carátula se abre más grande, con el título oficial, el género, la
+nota y la sinopsis. La imagen grande no se descarga hasta ese momento, así que la
+lista pesa lo mismo que antes.
+
 Las imágenes las sirve Imán, no `image.tmdb.org`. Es lo mismo que ya se hacía
 con el `.torrent`: la instancia es privada, y una página privada que va cargando
-imágenes de fuera le cuenta a un tercero qué se está mirando.
+imágenes de fuera le cuenta a un tercero qué se está mirando. La ruta es
+`/cartel/{tamaño}/{fichero}` y solo acepta los dos tamaños que se usan: si
+admitiera cualquiera, sería una forma cómoda de que este servidor se dedicara a
+bajar imágenes de TMDB por encargo de un tercero.
 
 Todo esto es opcional. Sin `IMAN_TMDB` no se habla con TMDB y las páginas salen
 como antes de que existiera, sin hueco ni sitio vacío.
