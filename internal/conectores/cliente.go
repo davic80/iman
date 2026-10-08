@@ -61,6 +61,17 @@ func NuevoCliente(intervalo time.Duration) *Cliente {
 	}
 }
 
+// ConProxy devuelve un cliente que sale a internet por un proxy HTTP, con su
+// propio freno. Es para los sitios que Cloudflare veta por venir de un centro
+// de datos (error 1005): por el proxy salen desde una conexión de casa.
+func (c *Cliente) ConProxy(proxy *url.URL) *Cliente {
+	n := NuevoCliente(c.intervalo)
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.Proxy = http.ProxyURL(proxy)
+	n.http.Transport = t
+	return n
+}
+
 // Documento pide una URL y devuelve el HTML ya parseado.
 func (c *Cliente) Documento(ctx context.Context, dir string) (*goquery.Document, error) {
 	return c.DocumentoDesde(ctx, dir, "")

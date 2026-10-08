@@ -36,6 +36,9 @@ services:
       IMAN_GOOGLE_SECRETO: ${IMAN_GOOGLE_SECRETO:-}
       IMAN_CLAVE_SESION: ${IMAN_CLAVE_SESION:-}
       IMAN_URL: ${IMAN_URL:-https://iman.ojoalprecio.com}
+      # DonTorrent veta Hetzner (Cloudflare 1005): sale por el tinyproxy de la
+      # Pi5 a través de Tailscale. Vacío es salir directo.
+      IMAN_PROXY_DONTORRENT: ${IMAN_PROXY_DONTORRENT:-}
       IMAN_PERMITIDO: ${IMAN_PERMITIDO:-david.cornejo@gmail.com}
     volumes:
       # Único estado persistente de la app. Perderlo no rompe nada: obliga a

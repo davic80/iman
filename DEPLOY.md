@@ -126,3 +126,20 @@ Y desde fuera, que el acceso está puesto de verdad:
 ```bash
 curl -si https://iman.ojoalprecio.com/ | grep -i '^location'   # -> /entrar
 ```
+
+## DonTorrent por la Pi5
+
+Cloudflare veta en DonTorrent las IPs de Hetzner (`error code: 1005`). Para
+DonTorrent, Imán sale por un tinyproxy en la Pi5 de casa, a través de Tailscale:
+
+- En la Pi5 (`pi@100.99.209.115`), `~/proxy-iman`: tinyproxy en Docker,
+  publicado solo en la IP de Tailscale (`100.99.209.115:8888`), que acepta solo
+  al servidor (`Allow 100.96.69.24`) y solo hacia el puerto 443.
+- En el `.env` del servidor: `IMAN_PROXY_DONTORRENT=http://100.99.209.115:8888`.
+
+Si la Pi5 se apaga, DonTorrent sale caído en `/salud` y el resto sigue igual.
+Para comprobar el proxy desde el servidor:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -x http://100.99.209.115:8888 https://dontorrent.moi/   # -> 200
+```

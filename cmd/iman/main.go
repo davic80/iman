@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -62,7 +63,19 @@ func main() {
 func motor(log *slog.Logger, cfg web.Config) (*buscador.Buscador, *dominios.Resolutor, *novedades.Rondin) {
 	cliente := conectores.NuevoCliente(2 * time.Second)
 	elite := conectores.NuevoEliteTorrent(cliente)
-	don := conectores.NuevoDonTorrent(cliente)
+	// DonTorrent veta las IPs de centros de datos, así que puede salir por un
+	// proxy aparte. Con su propio cliente no comparte freno con los demás, que
+	// tampoco hace falta: el freno es por dominio.
+	clienteDon := cliente
+	if cfg.ProxyDonTorrent != "" {
+		if p, err := url.Parse(cfg.ProxyDonTorrent); err != nil || p.Host == "" {
+			log.Warn("proxy de DonTorrent ilegible, sale directo", "proxy", cfg.ProxyDonTorrent)
+		} else {
+			clienteDon = cliente.ConProxy(p)
+			log.Info("DonTorrent sale por proxy", "proxy", p.Host)
+		}
+	}
+	don := conectores.NuevoDonTorrent(clienteDon)
 	divx := conectores.NuevoDivxTotal(cliente)
 
 	// Que no se pueda guardar el estado no impide arrancar: solo significa que

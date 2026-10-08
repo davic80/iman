@@ -57,6 +57,10 @@ type Config struct {
 	// ClaveSesion firma las cookies. Si falta se inventa una al arrancar, y
 	// cada despliegue obliga a volver a entrar.
 	ClaveSesion string
+
+	// ProxyDonTorrent es un proxy HTTP por el que sale DonTorrent, que veta las
+	// IPs de Hetzner. Vacío es salir directo.
+	ProxyDonTorrent string
 }
 
 // CargarConfig lee la configuracion del entorno.
@@ -65,18 +69,19 @@ type Config struct {
 // entorno puede pisarla, que resulta comodo al depurar en local.
 func CargarConfig(versionCompilada string) Config {
 	return Config{
-		Addr:           env("IMAN_ADDR", ":8080"),
-		Version:        env("IMAN_VERSION", versionCompilada),
-		EstadoPath:     env("IMAN_ESTADO", "/datos/estado.json"),
-		TiempoBusqueda: envDuracion("IMAN_TIEMPO_BUSQUEDA", 20*time.Second),
-		NovedadesPath:  env("IMAN_NOVEDADES", "/datos/novedades.json"),
-		RondaNovedades: envDuracion("IMAN_RONDA_NOVEDADES", novedades.CadaPorDefecto),
-		TMDB:           env("IMAN_TMDB", ""),
-		GoogleID:       env("IMAN_GOOGLE_ID", ""),
-		GoogleSecreto:  env("IMAN_GOOGLE_SECRETO", ""),
-		URLPublica:     env("IMAN_URL", "https://iman.ojoalprecio.com"),
-		Permitido:      env("IMAN_PERMITIDO", "david.cornejo@gmail.com"),
-		ClaveSesion:    env("IMAN_CLAVE_SESION", ""),
+		Addr:            env("IMAN_ADDR", ":8080"),
+		Version:         env("IMAN_VERSION", versionCompilada),
+		EstadoPath:      env("IMAN_ESTADO", "/datos/estado.json"),
+		TiempoBusqueda:  envDuracion("IMAN_TIEMPO_BUSQUEDA", 20*time.Second),
+		NovedadesPath:   env("IMAN_NOVEDADES", "/datos/novedades.json"),
+		RondaNovedades:  envDuracion("IMAN_RONDA_NOVEDADES", novedades.CadaPorDefecto),
+		TMDB:            env("IMAN_TMDB", ""),
+		GoogleID:        env("IMAN_GOOGLE_ID", ""),
+		GoogleSecreto:   env("IMAN_GOOGLE_SECRETO", ""),
+		URLPublica:      env("IMAN_URL", "https://iman.ojoalprecio.com"),
+		Permitido:       env("IMAN_PERMITIDO", "david.cornejo@gmail.com"),
+		ClaveSesion:     env("IMAN_CLAVE_SESION", ""),
+		ProxyDonTorrent: env("IMAN_PROXY_DONTORRENT", ""),
 	}
 }
 
