@@ -14,12 +14,44 @@ import (
 // servidor de Alemania: la búsqueda de "matrix" y la ficha de Matrix Reloaded
 // en tomadivx.net, más el parking de dontorrent.click con su interstitial.
 
-func TestDonTorrentURLBusqueda(t *testing.T) {
-	d := NuevoDonTorrent(nil)
-	// La consulta va en la ruta, y los espacios se escapan sin romperla.
-	quiero := "https://tomadivx.net/buscar/el%20padrino"
-	if got := d.URLBusqueda("el padrino"); got != quiero {
-		t.Errorf("URLBusqueda = %q, quiero %q", got, quiero)
+// La búsqueda es un POST del formulario: la consulta va en "valor", y pedir
+// /buscar/<consulta> da 404 desde que el sitio vive en dontorrent.moi.
+func TestDonTorrentBuscaPorFormulario(t *testing.T) {
+	var metodo, valor string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metodo, valor = r.Method, r.PostFormValue("valor")
+		http.ServeFile(w, r, "testdata/dontorrent-moi-busqueda.html")
+	}))
+	defer srv.Close()
+
+	d := NuevoDonTorrent(NuevoCliente(0))
+	d.Mudar(srv.URL)
+	rs, err := d.Buscar(context.Background(), " tadeo jones ")
+	if err != nil {
+		t.Fatalf("Buscar: %v", err)
+	}
+	if metodo != http.MethodPost || valor != "tadeo jones" {
+		t.Errorf("se pidió %s con valor %q", metodo, valor)
+	}
+	if len(rs) != 10 || rs[0].Titulo != "Las aventuras de Tadeo Jones [3D]." {
+		t.Fatalf("%d resultados, el primero %+v", len(rs), rs)
+	}
+}
+
+// La ficha de dontorrent.moi no tiene enlace: el .torrent sale tras una prueba
+// de trabajo en el navegador. Se resuelve sin .torrent y sin error.
+func TestDonTorrentFichaProtegida(t *testing.T) {
+	srv := servidorConFixture(t, "dontorrent-moi-ficha.html")
+	defer srv.Close()
+
+	d := NuevoDonTorrent(NuevoCliente(0))
+	d.Mudar(srv.URL)
+	r := Resultado{Ficha: srv.URL + "/pelicula/25832/Tadeo-Jones-3"}
+	if err := d.Resolver(context.Background(), &r); err != nil {
+		t.Fatalf("Resolver: %v", err)
+	}
+	if r.Torrent != "" || r.Titulo != "Tadeo Jones 3" {
+		t.Errorf("Torrent %q, Título %q", r.Torrent, r.Titulo)
 	}
 }
 
@@ -39,7 +71,7 @@ func TestDonTorrentParsearBusqueda(t *testing.T) {
 	if primero.Titulo != "Matrix [4K]" {
 		t.Errorf("Titulo = %q", primero.Titulo)
 	}
-	if primero.Ficha != "https://tomadivx.net/pelicula/23404/Matrix-4K" {
+	if primero.Ficha != DonTorrentBase+"/pelicula/23404/Matrix-4K" {
 		t.Errorf("Ficha = %q", primero.Ficha)
 	}
 	if primero.Info.Calidad != titulos.Cal4K {

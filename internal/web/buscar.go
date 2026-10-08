@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -211,6 +212,11 @@ func (s *Servidor) torrent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cuerpo, nombre, err := s.motor.Torrent(r.Context(), sitio, ficha)
+	if errors.Is(err, buscador.ErrSoloEnFicha) {
+		// La ficha ya la ha validado el conector al resolverla: es de su sitio.
+		http.Redirect(w, r, ficha, http.StatusFound)
+		return
+	}
 	if err != nil {
 		s.log.Warn("no se pudo traer el .torrent", "sitio", sitio, "ficha", ficha, "error", err)
 		http.Error(w, "no se pudo descargar ese .torrent", http.StatusBadGateway)

@@ -2,6 +2,7 @@ package buscador
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -34,6 +35,10 @@ func (b *Buscador) Resolver(ctx context.Context, sitio, ficha string) (conectore
 	return r, nil
 }
 
+// ErrSoloEnFicha es que el sitio no deja bajar el .torrent desde el servidor y
+// hay que ir a la ficha a por él.
+var ErrSoloEnFicha = errors.New("el .torrent solo se baja desde la ficha")
+
 // Torrent trae el fichero .torrent de una ficha, junto con el nombre con el que
 // debería guardarse.
 //
@@ -46,7 +51,7 @@ func (b *Buscador) Torrent(ctx context.Context, sitio, ficha string) (io.ReadClo
 		return nil, "", err
 	}
 	if r.Torrent == "" {
-		return nil, "", fmt.Errorf("%s no ofrece .torrent para esa ficha", sitio)
+		return nil, "", fmt.Errorf("%s: %w", sitio, ErrSoloEnFicha)
 	}
 
 	c := b.conector(sitio)

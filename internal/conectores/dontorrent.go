@@ -20,7 +20,7 @@ import (
 // oficial: ese tiene vetado en Cloudflare el ASN entero de Hetzner y contesta
 // "error code: 1005" a cualquier petición desde el servidor. TomaDivx es el
 // mismo sitio, la misma plantilla y el mismo catálogo, y sí contesta.
-const DonTorrentBase = "https://tomadivx.net"
+const DonTorrentBase = "https://dontorrent.moi"
 
 // DonTorrent es la plataforma de DonTorrent, que vive a la vez en varios
 // dominios con marcas distintas (TomaDivx, NaranjaTorrent...). Todos sirven el
@@ -84,6 +84,7 @@ func (d *DonTorrent) Mudar(base string) {
 func (d *DonTorrent) Semillas() []string {
 	return []string{
 		DonTorrentBase,
+		"https://tomadivx.net",
 		"https://naranjatorrent.com",
 		"https://dontorrent.management",
 	}
@@ -97,7 +98,7 @@ func (d *DonTorrent) Semillas() []string {
 // marca positiva sería premiar al impostor y castigar al bueno.
 func (d *DonTorrent) Huella() Huella {
 	return Huella{
-		Contiene: []string{"descargar-peliculas", "se han encontrado"},
+		Contiene: []string{"se han encontrado", "text-decoration-none"},
 		Consulta: "matrix",
 		// La búsqueda de "matrix" da 13 resultados en una página. Tres es
 		// margen de sobra para distinguir un sitio vivo de uno que finge.
@@ -125,10 +126,10 @@ func (d *DonTorrent) Sondear(ctx context.Context, base string) (Sondeo, error) {
 	return Sondeo{HTML: html, Resultados: len(rs)}, nil
 }
 
-// URLBusqueda arma la URL de búsqueda. La consulta va en la ruta, no en un
-// parámetro: /buscar/matrix.
-func (d *DonTorrent) URLBusqueda(consulta string) string {
-	return d.Base() + "/buscar/" + url.PathEscape(strings.TrimSpace(consulta))
+// URLBusqueda es adonde va el formulario de búsqueda. La consulta ya no viaja
+// en la ruta (/buscar/matrix da 404): va en el campo "valor" de un POST.
+func (d *DonTorrent) URLBusqueda() string {
+	return d.Base() + "/buscar"
 }
 
 func (d *DonTorrent) Buscar(ctx context.Context, consulta string) ([]Resultado, error) {
@@ -144,7 +145,8 @@ func (d *DonTorrent) Buscar(ctx context.Context, consulta string) ([]Resultado, 
 // Sin esa cabecera responde 200 con "Necesitas utilizar el buscador" y ni un
 // resultado, que es su manera de pedir que hayas pasado por el formulario.
 func (d *DonTorrent) pedirBusqueda(ctx context.Context, consulta string) (*goquery.Document, error) {
-	doc, err := d.Cliente.DocumentoDesde(ctx, d.URLBusqueda(consulta), d.Base()+"/")
+	campos := url.Values{"valor": {strings.TrimSpace(consulta)}, "Buscar": {"Buscar"}}
+	doc, err := d.Cliente.FormularioDesde(ctx, d.URLBusqueda(), campos, d.Base()+"/")
 	if err != nil {
 		return nil, fmt.Errorf("dontorrent: %w", err)
 	}
@@ -353,7 +355,11 @@ func (d *DonTorrent) parsearFicha(doc *goquery.Document, r *Resultado) error {
 	if t, ok := doc.Find("a[download]").First().Attr("href"); ok {
 		r.Torrent = absoluta(base, t)
 	}
-	if r.Torrent == "" {
+	// Desde 2026 el botón ya no es un enlace: el .torrent solo se entrega tras
+	// una prueba de trabajo en el navegador, puesta a propósito contra las
+	// descargas automáticas. No se esquiva: la ficha se resuelve sin .torrent
+	// y la web manda a quien busca a la ficha para que lo baje él.
+	if r.Torrent == "" && doc.Find(".protected-download").Length() == 0 {
 		return fmt.Errorf("dontorrent: ficha %s no tiene enlace de descarga", r.Ficha)
 	}
 
@@ -363,7 +369,7 @@ func (d *DonTorrent) parsearFicha(doc *goquery.Document, r *Resultado) error {
 	// hay que deducirlo del nombre del fichero y llega como "Admisin
 	// imposible". Y no es solo estético: sin la letra que falta, esa película
 	// no se funde con la misma de otro sitio.
-	if h2 := strings.TrimSpace(doc.Find("h2.descargarTitulo").First().Text()); h2 != "" {
+	if h2 := strings.TrimSpace(doc.Find(".descargarTitulo").First().Text()); h2 != "" {
 		r.Titulo = h2
 		r.Info = titulos.Analizar(h2)
 	}

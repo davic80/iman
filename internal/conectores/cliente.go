@@ -85,6 +85,44 @@ func (c *Cliente) DocumentoDesde(ctx context.Context, dir, referente string) (*g
 	return doc, nil
 }
 
+// FormularioDesde envía un formulario por POST y devuelve el HTML parseado.
+//
+// DonTorrent dejó de aceptar la búsqueda en la ruta (/buscar/matrix) y ahora
+// solo responde al POST de su formulario.
+func (c *Cliente) FormularioDesde(ctx context.Context, dir string, campos url.Values, referente string) (*goquery.Document, error) {
+	u, err := url.Parse(dir)
+	if err != nil {
+		return nil, fmt.Errorf("url inválida %q: %w", dir, err)
+	}
+	if err := c.esperarTurno(ctx, u.Host); err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, dir, strings.NewReader(campos.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", c.ua)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "es-ES,es;q=0.9")
+	if referente != "" {
+		req.Header.Set("Referer", referente)
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("enviando %s: %w", dir, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("enviando %s: %s", dir, resp.Status)
+	}
+	doc, err := goquery.NewDocumentFromReader(io.LimitReader(resp.Body, MaxCuerpo))
+	if err != nil {
+		return nil, fmt.Errorf("parseando %s: %w", dir, err)
+	}
+	return doc, nil
+}
+
 // Traer pide una URL y devuelve el cuerpo. Hay que cerrarlo.
 func (c *Cliente) Traer(ctx context.Context, dir string) (io.ReadCloser, error) {
 	return c.TraerDesde(ctx, dir, "")
