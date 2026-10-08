@@ -10,7 +10,6 @@
 #   3) docker compose up -d
 #   4) Añade al Caddyfile compartido:
 #        iman.ojoalprecio.com {
-#            basic_auth { david <hash-bcrypt> }
 #            reverse_proxy iman:8080
 #        }
 #      Y recarga:  docker exec cloud-caddy-1 caddy reload --config /etc/caddy/Caddyfile
@@ -31,6 +30,13 @@ services:
       # vive en el .env del servidor, que no se versiona. Si no está, Imán
       # arranca igual y las páginas salen sin carátulas.
       IMAN_TMDB: ${IMAN_TMDB:-}
+      # Acceso con Google: solo entra IMAN_PERMITIDO. Sin IMAN_GOOGLE_ID la app
+      # queda abierta, así que en el servidor tiene que estar. Secretos en .env.
+      IMAN_GOOGLE_ID: ${IMAN_GOOGLE_ID:-}
+      IMAN_GOOGLE_SECRETO: ${IMAN_GOOGLE_SECRETO:-}
+      IMAN_CLAVE_SESION: ${IMAN_CLAVE_SESION:-}
+      IMAN_URL: ${IMAN_URL:-https://iman.ojoalprecio.com}
+      IMAN_PERMITIDO: ${IMAN_PERMITIDO:-david.cornejo@gmail.com}
     volumes:
       # Único estado persistente de la app. Perderlo no rompe nada: obliga a
       # redescubrir los dominios y a esperar una ronda de novedades.

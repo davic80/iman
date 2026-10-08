@@ -43,6 +43,20 @@ type Config struct {
 	// no aparece en .env.example. Vacia significa "sin carátulas", que es un
 	// modo de funcionamiento normal y no un error.
 	TMDB string
+
+	// Acceso con Google. Sin GoogleID la app no pide sesión, que es lo que
+	// quieren los tests y el desarrollo en local; en producción tiene que estar.
+	// GoogleSecreto y ClaveSesion son secretos y viven solo en el .env.
+	GoogleID      string
+	GoogleSecreto string
+	// URLPublica es desde donde se ve la app; de ella sale la redirect URI que
+	// hay que dar de alta en Google Cloud (URLPublica + "/oauth/google").
+	URLPublica string
+	// Permitido es la única cuenta que puede entrar.
+	Permitido string
+	// ClaveSesion firma las cookies. Si falta se inventa una al arrancar, y
+	// cada despliegue obliga a volver a entrar.
+	ClaveSesion string
 }
 
 // CargarConfig lee la configuracion del entorno.
@@ -58,6 +72,11 @@ func CargarConfig(versionCompilada string) Config {
 		NovedadesPath:  env("IMAN_NOVEDADES", "/datos/novedades.json"),
 		RondaNovedades: envDuracion("IMAN_RONDA_NOVEDADES", novedades.CadaPorDefecto),
 		TMDB:           env("IMAN_TMDB", ""),
+		GoogleID:       env("IMAN_GOOGLE_ID", ""),
+		GoogleSecreto:  env("IMAN_GOOGLE_SECRETO", ""),
+		URLPublica:     env("IMAN_URL", "https://iman.ojoalprecio.com"),
+		Permitido:      env("IMAN_PERMITIDO", "david.cornejo@gmail.com"),
+		ClaveSesion:    env("IMAN_CLAVE_SESION", ""),
 	}
 }
 

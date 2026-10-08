@@ -18,6 +18,7 @@
   <nav>
     <a href="/novedades">Novedades</a>
     <a href="/salud">Salud</a>
+    {{if .Acceso}}<form class="salir" method="post" action="/salir"><button>Salir</button></form>{{end}}
   </nav>
 </header>
 

@@ -98,6 +98,11 @@ func ejecutar(log *slog.Logger) error {
 	carteles := tmdb.Nuevo(cfg.TMDB, log)
 	servidor.ConTMDB(carteles)
 	log.Info("carátulas", "tmdb", carteles.Activo())
+	if cfg.GoogleID == "" {
+		log.Warn("acceso abierto: sin IMAN_GOOGLE_ID no se pide cuenta de Google")
+	} else {
+		log.Info("acceso con google", "permitido", cfg.Permitido, "url", cfg.URLPublica)
+	}
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,

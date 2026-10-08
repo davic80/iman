@@ -497,7 +497,7 @@ code {
 /* En pantalla ancha, carátula a la izquierda y datos a la derecha; en el móvil,
    una encima de otra. */
 @media (min-width: 34rem) {
-  .visor { display: grid; grid-template-columns: 20rem 1fr; }
+  .visor[open] { display: grid; grid-template-columns: 20rem 1fr; }
   .visor-cartel { grid-row: 1; }
 }
 
@@ -522,3 +522,8 @@ code {
 }
 
 .visor-cerrar:hover { background: var(--iman); }
+
+/* Salir es un POST (que un enlace no cierre la sesión de nadie), pero tiene que
+   parecer un enlace más del menú. */
+.salir { display: inline; margin: 0; }
+.salir button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }

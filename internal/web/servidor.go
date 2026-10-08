@@ -58,6 +58,8 @@ type Servidor struct {
 	novedades  *novedades.Rondin
 	vigilante  Vigilante
 	carteles   *tmdb.Cliente
+
+	claveSesion []byte
 }
 
 // Vigilante es lo único que /salud necesita del resolutor de dominios: cómo fue
@@ -94,12 +96,17 @@ func Nuevo(cfg Config, log *slog.Logger, motor *buscador.Buscador) (*Servidor, e
 	if motor == nil {
 		motor = buscador.Nuevo(log, cfg.TiempoBusqueda)
 	}
+	clave := []byte(cfg.ClaveSesion)
+	if len(clave) == 0 {
+		clave = []byte(aleatorio())
+	}
 	return &Servidor{
-		cfg:        cfg,
-		log:        log,
-		plantillas: plantillas,
-		arranque:   time.Now(),
-		motor:      motor,
+		claveSesion: clave,
+		cfg:         cfg,
+		log:         log,
+		plantillas:  plantillas,
+		arranque:    time.Now(),
+		motor:       motor,
 		// Un rondín sin sitios: la portada sale vacía en vez de tener que
 		// comprobar en cada handler si hay alguien detrás.
 		novedades: novedades.Nuevo(log, nil),
@@ -131,7 +138,11 @@ func (s *Servidor) Handler() http.Handler {
 
 	mux.Handle("GET /estaticos/", ficherosEstaticos())
 
-	return registrar(s.log, mux)
+	mux.HandleFunc("GET /entrar", s.entrar)
+	mux.HandleFunc("GET /oauth/google", s.vueltaGoogle)
+	mux.HandleFunc("POST /salir", s.salir)
+
+	return registrar(s.log, s.exigirSesion(mux))
 }
 
 type datosBase struct {
@@ -140,11 +151,14 @@ type datosBase struct {
 	// TMDB dice si hay carátulas. Lo mira el pie para dar el crédito, que es lo
 	// que TMDB pide a cambio de su API y no se pone cuando no se está usando.
 	TMDB bool
+
+	// Acceso dice si hay sesión de Google, para enseñar el botón de salir.
+	Acceso bool
 }
 
 // base son los datos que toda página necesita.
 func (s *Servidor) base() datosBase {
-	return datosBase{Version: s.cfg.Version, TMDB: s.carteles.Activo()}
+	return datosBase{Version: s.cfg.Version, TMDB: s.carteles.Activo(), Acceso: s.accesoActivo()}
 }
 
 type datosSalud struct {
