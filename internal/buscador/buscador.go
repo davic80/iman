@@ -101,12 +101,21 @@ func (b *Buscador) Buscar(ctx context.Context, consulta string, op Opciones) Bus
 		grupo  sync.WaitGroup
 	)
 
+	// Los sitios buscan por palabras sueltas y "1x02" no lo entiende ninguno:
+	// con él no encuentran nada, o rellenan con recomendaciones. Así que a los
+	// sitios se les pide la serie a secas y el capítulo lo filtra Imán.
+	pedido := titulos.Analizar(consulta)
+	aSitios := consulta
+	if pedido.EsSerie() && pedido.Obra != "" {
+		aSitios = pedido.Obra
+	}
+
 	for _, c := range b.conectores {
 		grupo.Add(1)
 		go func(c conectores.Conector) {
 			defer grupo.Done()
 
-			rs, err := b.consultar(ctx, c, consulta)
+			rs, err := b.consultar(ctx, c, aSitios)
 
 			mu.Lock()
 			defer mu.Unlock()
@@ -121,6 +130,9 @@ func (b *Buscador) Buscar(ctx context.Context, consulta string, op Opciones) Bus
 
 	// Se filtra antes de fundir: un resultado en latino no tiene por qué entrar
 	// en una fila y arrastrar a ella un sitio que no se va a poder enseñar.
+	if aSitios != consulta {
+		crudos = delCapitulo(crudos, pedido)
+	}
 	utiles, descartados := filtrar(crudos, op)
 	filas := Fundir(utiles)
 	ordenar(filas, consulta)
@@ -235,6 +247,37 @@ func ordenar(rs []Resultado, consulta string) {
 		}
 		return a.Titulo < b.Titulo
 	})
+}
+
+// delCapitulo se queda con lo que es de la serie y del capítulo pedidos. Los
+// packs de la temporada entera (sin episodio) también valen: el capítulo va
+// dentro. Si se pidió la temporada sin capítulo, vale cualquiera de ella.
+func delCapitulo(rs []conectores.Resultado, pedido titulos.Info) []conectores.Resultado {
+	palabras := strings.Fields(pedido.Obra)
+	var out []conectores.Resultado
+	for _, r := range rs {
+		if r.Info.Temporada != pedido.Temporada {
+			continue
+		}
+		if pedido.Episodio != 0 && r.Info.Episodio != 0 && r.Info.Episodio != pedido.Episodio {
+			continue
+		}
+		hay := make(map[string]bool)
+		for _, p := range strings.Fields(titulos.Normalizar(r.Titulo)) {
+			hay[p] = true
+		}
+		todas := true
+		for _, p := range palabras {
+			if !hay[p] {
+				todas = false
+				break
+			}
+		}
+		if todas {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // mismaSerie dice si dos resultados son capítulos distintos de la misma serie.

@@ -23,6 +23,7 @@ type falso struct {
 	nombre    string
 	resultado []conectores.Resultado
 	err       error
+	pedido    string
 	tarda     time.Duration
 	revienta  bool
 	llamadas  int
@@ -32,6 +33,7 @@ func (f *falso) Nombre() string { return f.nombre }
 
 func (f *falso) Buscar(ctx context.Context, consulta string) ([]conectores.Resultado, error) {
 	f.llamadas++
+	f.pedido = consulta
 	if f.revienta {
 		panic("el HTML ha cambiado y nadie lo vio venir")
 	}
@@ -352,4 +354,33 @@ func saludDe(t *testing.T, b *Buscador, nombre string) Salud {
 	}
 	t.Fatalf("no hay salud para %q", nombre)
 	return Salud{}
+}
+
+// "The Middle 1x02" no lo entiende ningún sitio: se les pide la serie y el
+// capítulo lo filtra Imán, sin colar otras series ni otros capítulos.
+func TestCapituloSeBuscaPorSerieYSeFiltra(t *testing.T) {
+	ep := func(titulo string, t, e int) conectores.Resultado {
+		r := res("Uno", titulo, titulos.Castellano, titulos.Cal720p)
+		r.Info = titulos.Analizar(titulo)
+		r.Info.Idioma = titulos.Castellano
+		return r
+	}
+	uno := &falso{nombre: "Uno", resultado: []conectores.Resultado{
+		ep("The Middle – 1×02", 1, 2),
+		ep("The Middle – 1×03", 1, 3),
+		ep("The Middle – 9×02", 9, 2),
+		ep("The Middle - Temporada 1", 1, 0),
+		ep("The office – 1×02", 1, 2),
+	}}
+	got := Nuevo(mudo(), time.Second, uno).Buscar(context.Background(), "The Middle 1x02", Opciones{})
+	if uno.pedido != "the middle" {
+		t.Errorf("al sitio se le pidió %q", uno.pedido)
+	}
+	var vistos []string
+	for _, r := range got.Resultados {
+		vistos = append(vistos, r.Titulo)
+	}
+	if len(vistos) != 2 || vistos[0] != "The Middle – 1×02" && vistos[1] != "The Middle – 1×02" {
+		t.Errorf("resultados %q, quiero el 1×02 y el pack de la temporada 1", vistos)
+	}
 }

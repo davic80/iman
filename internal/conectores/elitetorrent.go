@@ -168,6 +168,12 @@ func (e *EliteTorrent) parsearBusqueda(doc *goquery.Document) ([]Resultado, erro
 	}
 
 	var out []Resultado
+	// Sin resultados, el sitio no lo dice con una lista vacía: pinta "También
+	// pueden interesarte" con fichas cualquiera, en el mismo HTML que una
+	// búsqueda buena. Esas no son resultados.
+	if doc.Find(".not_results").Length() > 0 {
+		return nil, nil
+	}
 	doc.Find("ul.miniboxs-ficha li").Each(func(_ int, li *goquery.Selection) {
 		enlace := li.Find("div.meta a.nombre")
 		titulo := strings.TrimSpace(enlace.Text())

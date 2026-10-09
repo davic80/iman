@@ -1,6 +1,7 @@
 package conectores
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -196,4 +197,16 @@ func TestEliteTorrentFichaSinEnlacesDaError(t *testing.T) {
 func TestEliteTorrentCumpleLasInterfaces(t *testing.T) {
 	var _ Conector = (*EliteTorrent)(nil)
 	var _ Resolutor = (*EliteTorrent)(nil)
+}
+
+// Sin resultados el sitio rellena con "También pueden interesarte": no cuentan.
+func TestEliteTorrentSinResultadosNoDevuelveRecomendaciones(t *testing.T) {
+	srv := servidorConFixture(t, "elitetorrent-sin-resultados.html")
+	defer srv.Close()
+	e := NuevoEliteTorrent(NuevoCliente(0))
+	e.Mudar(srv.URL)
+	rs, err := e.Buscar(context.Background(), "The Middle 1x02")
+	if err != nil || len(rs) != 0 {
+		t.Fatalf("%d resultados, err %v", len(rs), err)
+	}
 }
