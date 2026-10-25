@@ -119,11 +119,21 @@ func (c *Cliente) FormularioDesde(ctx context.Context, dir string, campos url.Va
 	if referente != "" {
 		req.Header.Set("Referer", referente)
 	}
-	resp, err := c.http.Do(req)
+	// Un formulario no se sigue a través de redirecciones: Go convertiría el
+	// POST en un GET sin campos, y el sitio contestaría con cero resultados y
+	// un 200, que parece un sitio sano que no tiene nada. Una redirección aquí
+	// es que el sitio se ha mudado, y se dice como error para que el
+	// vigilante de dominios lo note.
+	sinSeguir := *c.http
+	sinSeguir.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := sinSeguir.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("enviando %s: %w", dir, err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return nil, fmt.Errorf("enviando %s: redirige a %s, el sitio se ha mudado", dir, resp.Header.Get("Location"))
+	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("enviando %s: %s", dir, resp.Status)
 	}

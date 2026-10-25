@@ -273,3 +273,18 @@ func TestDonTorrentBusquedaEnLista(t *testing.T) {
 		t.Errorf("no se leyó el formato (BDremux-1080p)")
 	}
 }
+
+// Un dominio viejo que redirige al nuevo convierte el POST en un GET sin campos
+// y da cero resultados con un 200. Tiene que salir como error, o el vigilante
+// nunca se entera de la mudanza.
+func TestDonTorrentFormularioRedirigidoEsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://dontorrent.nuevo/buscar", http.StatusMovedPermanently)
+	}))
+	defer srv.Close()
+	d := NuevoDonTorrent(NuevoCliente(0))
+	d.Mudar(srv.URL)
+	if _, err := d.Buscar(context.Background(), "matrix"); err == nil {
+		t.Fatal("una búsqueda redirigida pasó por buena")
+	}
+}
