@@ -261,7 +261,9 @@ func (d *DonTorrent) parsearBusqueda(doc *goquery.Document) ([]Resultado, error)
 	}
 
 	var out []Resultado
-	doc.Find("#buscador p").Each(func(_ int, p *goquery.Selection) {
+	// Cada resultado era un <p>; en dontorrent.diy pasó a ser un
+	// <li class="search-result">. Se leen las dos formas.
+	doc.Find("#buscador p, #buscador li.search-result").Each(func(_ int, p *goquery.Selection) {
 		enlace := p.Find("a.text-decoration-none").First()
 		titulo := strings.TrimSpace(enlace.Text())
 		href, ok := enlace.Attr("href")
@@ -316,6 +318,9 @@ func idiomaPorDefecto(i titulos.Idioma) titulos.Idioma {
 // donde va el formato. Se distingue del de la sección ("Película", "Serie")
 // porque ese lleva clase badge.
 func formatoDeFila(p *goquery.Selection) string {
+	if f := strings.TrimSpace(p.Find("span.search-result-format").First().Text()); f != "" {
+		return f
+	}
 	var formato string
 	p.Find("span").Each(func(_ int, s *goquery.Selection) {
 		if s.HasClass("badge") || s.Find("a").Length() > 0 {

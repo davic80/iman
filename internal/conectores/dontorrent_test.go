@@ -253,3 +253,23 @@ func servidorConFixture(t *testing.T, nombre string) *httptest.Server {
 		http.ServeFile(w, r, "testdata/"+nombre)
 	}))
 }
+
+// En dontorrent.diy los resultados son <li class="search-result"> (diez por
+// página de los 13 que hay) y el formato
+// va en su propio <span>.
+func TestDonTorrentBusquedaEnLista(t *testing.T) {
+	srv := servidorConFixture(t, "dontorrent-diy-busqueda.html")
+	defer srv.Close()
+	d := NuevoDonTorrent(NuevoCliente(0))
+	d.Mudar(srv.URL)
+	rs, err := d.Buscar(context.Background(), "matrix")
+	if err != nil {
+		t.Fatalf("Buscar: %v", err)
+	}
+	if len(rs) != 10 || rs[0].Titulo != "Matrix." || rs[0].Ficha != srv.URL+"/pelicula/10059/Matrix" {
+		t.Fatalf("%d resultados, el primero %+v", len(rs), rs[0])
+	}
+	if rs[0].Info.Calidad == titulos.CalidadDesconocida {
+		t.Errorf("no se leyó el formato (BDremux-1080p)")
+	}
+}
