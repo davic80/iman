@@ -20,7 +20,7 @@ import (
 // oficial: ese tiene vetado en Cloudflare el ASN entero de Hetzner y contesta
 // "error code: 1005" a cualquier petición desde el servidor. TomaDivx es el
 // mismo sitio, la misma plantilla y el mismo catálogo, y sí contesta.
-const DonTorrentBase = "https://dontorrent.moi"
+const DonTorrentBase = "https://dontorrent.diy"
 
 // DonTorrent es la plataforma de DonTorrent, que vive a la vez en varios
 // dominios con marcas distintas (TomaDivx, NaranjaTorrent...). Todos sirven el
@@ -84,6 +84,7 @@ func (d *DonTorrent) Mudar(base string) {
 func (d *DonTorrent) Semillas() []string {
 	return []string{
 		DonTorrentBase,
+		"https://dontorrent.moi",
 		"https://tomadivx.net",
 		"https://naranjatorrent.com",
 		"https://dontorrent.management",
