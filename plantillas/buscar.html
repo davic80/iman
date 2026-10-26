@@ -34,6 +34,16 @@
     <span class="descartados">{{.Descartados}} descartado{{if ne .Descartados 1}}s{{end}} por idioma</span>{{end}}
   </p>
 
+  {{if gt (len .Resultados) 1}}
+  <nav class="filtros-grupo orden" aria-label="Orden">
+    <span class="filtros-nombre">Ordenar</span>
+    {{range .Ordenes}}
+    <a class="filtro{{if .Activa}} filtro--activo{{end}}" href="{{.URL}}"
+       {{if .Activa}}aria-current="true"{{end}}>{{.Etiqueta}}</a>
+    {{end}}
+  </nav>
+  {{end}}
+
   <ul class="lista">
     {{range .Resultados}}
     <li class="resultado{{if .Dudoso}} resultado--dudoso{{end}}">
@@ -46,6 +56,7 @@
           {{with .Episodio}}<span class="etiqueta">{{.}}</span>{{end}}
           {{with .Año}}<span class="etiqueta">{{.}}</span>{{end}}
           {{with .Tamaño}}<span class="etiqueta">{{.}}</span>{{end}}
+      {{with .Fecha}}<span class="etiqueta" title="Fecha de publicación">{{.}}</span>{{end}}
           {{with .Generos}}<span class="etiqueta etiqueta--genero">{{.}}</span>{{end}}
           {{with .Nota}}<span class="etiqueta etiqueta--nota" title="Puntuación en TMDB">★ {{.}}</span>{{end}}
           <span class="etiqueta etiqueta--sitio">{{.Sitio}}</span>

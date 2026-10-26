@@ -22,6 +22,7 @@ type datosBuscar struct {
 	Buscado       bool // Si hay algo que enseñar debajo del formulario
 	Dudosos       bool
 	Filtros       barraFiltros
+	Ordenes       []opcion
 	Resultados    []vistaResultado
 	Descartados   int
 	Fallos        []buscador.Fallo
@@ -39,6 +40,7 @@ type vistaResultado struct {
 	Dudoso     bool
 	Calidad    string
 	Tamaño     string
+	Fecha      string // "12/10/2026", si el sitio la da
 	Episodio   string
 	Año        string
 	Ficha      string
@@ -88,6 +90,9 @@ func (s *Servidor) paginaBuscar(w http.ResponseWriter, r *http.Request) {
 		// Las fichas se piden solo de lo que se va a enseñar: filtrar primero y
 		// preguntar después ahorra las consultas de las filas que nadie va a ver.
 		filtrados := f.aplicar(b.Resultados)
+		orden := ordenDe(q)
+		ordenarPor(filtrados, orden)
+		datos.Ordenes = opcionesOrden(orden, "/", q)
 		fichas := s.fichas(r.Context(), filtrados)
 
 		datos.Resultados = make([]vistaResultado, 0, len(filtrados))
@@ -106,7 +111,7 @@ func vista(r buscador.Resultado, f tmdb.Ficha) vistaResultado {
 		Idioma:     r.Info.Idioma.String(),
 		Dudoso:     r.Info.Idioma.Veredicto() == titulos.Duda,
 		Calidad:    string(r.Info.Calidad),
-		Tamaño:     conectores.FormatearTamaño(r.Tamaño),
+		Tamaño:     conectores.FormatearTamaño(tamañoDe(r)),
 		Ficha:      r.Ficha,
 		URLMagnet:  enlaceA("/magnet", r.Resultado),
 		URLTorrent: enlaceA("/torrent", r.Resultado),
@@ -116,6 +121,9 @@ func vista(r buscador.Resultado, f tmdb.Ficha) vistaResultado {
 			Sitio:      o.Sitio,
 			URLTorrent: enlaceA("/torrent", o),
 		})
+	}
+	if f := fechaDe(r); !f.IsZero() {
+		v.Fecha = f.Format("02/01/2006")
 	}
 	if r.Info.Año > 0 {
 		v.Año = strconv.Itoa(r.Info.Año)
